@@ -837,7 +837,7 @@
 
 "@solarprotocol/solidity-modules@git+https://gitlab.com/solar-labs/solidity-modules.git#feature/erc20":
   version "1.0.0"
-  resolved "git+https://gitlab.com/solar-labs/solidity-modules.git#1400e84d8936268fcc271edc16ecf56286b0608e"
+  resolved "git+https://gitlab.com/solar-labs/solidity-modules.git#ac12362f257de3a6be44cffddf0e08190c5088ca"
   dependencies:
     "@openzeppelin/contracts" "4.7.3"
     "@types/chai-arrays" "^2.0.0"

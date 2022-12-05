@@ -29,6 +29,11 @@ const config: HardhatUserConfig = {
     },
     owner: {
       default: 1,
+      bsc: "0xe56A248C316172D71238a30EbE936cD50bC91dcc",
+    },
+    treasury: {
+      default: 2,
+      bsc: "0x09663794Fa898d3b2F6613D2732E7d998C276aFD",
     },
   },
   networks: {
