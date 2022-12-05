@@ -1,0 +1,85 @@
+stages:
+  - build
+  - test
+
+default:
+  interruptible: true
+
+variables:
+  YARN_CACHE_DIR: "$CI_PROJECT_DIR/.yarn-cache"
+
+.job_template: &job_configuration
+  image: node:18
+  only:
+    refs:
+      - merge_requests
+      - develop
+      - master
+      - tags
+
+cache:
+  - key: yarn-cache
+    paths:
+      - $YARN_CACHE_DIR
+    policy: pull
+  - key:
+      files:
+        - yarn.lock
+    paths:
+      - $CI_PROJECT_DIR/node_modules
+    policy: pull
+
+install-dependencies:
+  stage: build
+  <<: *job_configuration
+  before_script:
+    - echo -e "machine gitlab.com\nlogin gitlab-ci-token\npassword ${CI_JOB_TOKEN}" > ~/.netrc
+  script:
+    - echo 'yarn-offline-mirror ".yarn-cache/"' >> .yarnrc
+    - echo 'yarn-offline-mirror-pruning true' >> .yarnrc
+    - yarn install --frozen-lockfile --cache-folder $YARN_CACHE_DIR
+  cache:
+    - key: yarn-cache
+      paths:
+        - $YARN_CACHE_DIR
+      policy: pull-push
+    - key:
+        files:
+          - yarn.lock
+      paths:
+        - $CI_PROJECT_DIR/node_modules
+      policy: pull-push
+
+slither:
+  stage: test
+  <<: *job_configuration
+  before_script:
+    - apt update
+    - apt install -y python3-pip
+    - pip3 install slither-analyzer
+  script:
+    - slither .
+
+prettier:
+  stage: test
+  <<: *job_configuration
+  script:
+    - yarn prettier
+
+solhint:
+  stage: test
+  <<: *job_configuration
+  script:
+    - yarn lint:sol
+
+eslint:
+  stage: test
+  <<: *job_configuration
+  script:
+    - yarn lint:ts
+
+unit-test:
+  stage: test
+  <<: *job_configuration
+  script:
+    - yarn test
