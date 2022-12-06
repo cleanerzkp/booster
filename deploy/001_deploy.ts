@@ -1,8 +1,10 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/dist/types";
 import { basename } from "path";
-import { ethers } from "ethers";
+import { ethers } from "hardhat";
 import { MasterChefNewPoolInfo } from "../utils/types";
+import { KswapToken } from "../typechain-types";
+import { MANAGER_ROLE, MINTER_ROLE } from "../test/constants";
 
 const START_BLOCK_NUMBER = 23707200;
 
@@ -109,7 +111,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const { deployer, owner, treasury } = await getNamedAccounts();
 
-  const KSWAP = await deploy("KswapToken", {
+  const kswapDeployment = await deploy("KswapToken", {
     contract: "KswapToken",
     from: deployer,
     proxy: {
@@ -123,20 +125,34 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     log: true,
   });
 
-  await deploy("MasterChef", {
+  const masterChefDeployment = await deploy("MasterChef", {
     contract: "MasterChef",
     from: deployer,
     proxy: {
       owner: owner,
       execute: {
         methodName: "initialize",
-        args: [KSWAP.address, treasury, owner, getNewFarms()],
+        args: [kswapDeployment.address, treasury, owner, getNewFarms()],
       },
     },
-    //gasLimit: 3e7,
     skipIfAlreadyDeployed: true,
     log: true,
   });
+
+  const kswapContract = (await ethers.getContract("KswapToken")) as KswapToken;
+  const hasMinterRole = await kswapContract.hasRole(
+    MINTER_ROLE,
+    masterChefDeployment.address
+  );
+  if (!hasMinterRole) {
+    await kswapContract
+      .connect(await ethers.getSigner(deployer))
+      .grantRole(MINTER_ROLE, masterChefDeployment.address);
+
+    await kswapContract
+      .connect(await ethers.getSigner(deployer))
+      .renounceRole(MANAGER_ROLE, deployer);
+  }
 };
 
 export default func;

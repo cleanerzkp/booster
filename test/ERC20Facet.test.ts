@@ -46,8 +46,8 @@ describe("ERC20Facet", () => {
       const { Token, owner, unnamedAccounts } = await setupTest();
 
       const sender = unnamedAccounts[0];
-      const recipient = unnamedAccounts.pop();
-      const anotherAccount = unnamedAccounts.pop();
+      const recipient = unnamedAccounts[5];
+      const anotherAccount = unnamedAccounts[6];
 
       const amount = ethers.utils.parseEther("1000");
 
@@ -81,7 +81,7 @@ describe("ERC20Facet", () => {
       const { Token, unnamedAccounts } = await setupTest();
 
       const sender = unnamedAccounts[6];
-      const recipient = unnamedAccounts.pop();
+      const recipient = unnamedAccounts[7];
       const amount = ethers.utils.parseEther("1000");
 
       await expect(
@@ -97,8 +97,8 @@ describe("ERC20Facet", () => {
     it("Should fail the contract is paused", async () => {
       const { owner, unnamedAccounts } = await setupTest();
 
-      const sender = unnamedAccounts.pop();
-      const recipient = unnamedAccounts.pop();
+      const sender = unnamedAccounts[8];
+      const recipient = unnamedAccounts[9];
       const amount = ethers.utils.parseEther("1000");
 
       await owner.Token.pause();
@@ -112,7 +112,7 @@ describe("ERC20Facet", () => {
       const { Token, owner, unnamedAccounts } = await setupTest();
 
       const sender = unnamedAccounts[0];
-      const recipient = unnamedAccounts.pop();
+      const recipient = unnamedAccounts[5];
       const amount = ethers.utils.parseEther("1000");
 
       await owner.Token.grantRole(MINTER_ROLE, owner.address);
@@ -146,8 +146,8 @@ describe("ERC20Facet", () => {
     it("Should revert if sender is blacklisted", async () => {
       const { owner, unnamedAccounts } = await setupTest();
 
-      const sender = unnamedAccounts.pop();
-      const recipient = unnamedAccounts.pop();
+      const sender = unnamedAccounts[5];
+      const recipient = unnamedAccounts[6];
       const amount = ethers.utils.parseEther("1000");
 
       await owner.Token["blacklist(address[],string[])"](
@@ -167,8 +167,8 @@ describe("ERC20Facet", () => {
     it("Should revert if recipient is blacklisted", async () => {
       const { owner, unnamedAccounts } = await setupTest();
 
-      const sender = unnamedAccounts.pop();
-      const recipient = unnamedAccounts.pop();
+      const sender = unnamedAccounts[5];
+      const recipient = unnamedAccounts[6];
       const amount = ethers.utils.parseEther("1000");
 
       await owner.Token["blacklist(address[],string[])"](
@@ -190,8 +190,8 @@ describe("ERC20Facet", () => {
     it("Should approve an allowance", async () => {
       const { Token, unnamedAccounts } = await setupTest();
 
-      const holder = unnamedAccounts.pop();
-      const spender = unnamedAccounts.pop();
+      const holder = unnamedAccounts[5];
+      const spender = unnamedAccounts[6];
       const amount = ethers.utils.parseEther("1000");
 
       expect(
@@ -215,8 +215,8 @@ describe("ERC20Facet", () => {
       const { Token, owner, unnamedAccounts } = await setupTest();
 
       const holder = unnamedAccounts[0];
-      const spender = unnamedAccounts.pop();
-      const recipient = unnamedAccounts.pop();
+      const spender = unnamedAccounts[5];
+      const recipient = unnamedAccounts[6];
       const amount = ethers.utils.parseEther("1000");
 
       await owner.Token.grantRole(MINTER_ROLE, owner.address);

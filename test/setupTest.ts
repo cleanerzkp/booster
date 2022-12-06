@@ -1,7 +1,6 @@
 import { deployments } from "hardhat";
 import { setupNamedUsers, setupUsers } from "@solarprotocol/hardhat-utils";
-import { KswapToken } from "../typechain-types";
-import { MasterChef } from "../typechain-types/contracts/MasterChef.sol";
+import { KswapToken, MasterChef } from "../typechain-types";
 
 const setupTest = deployments.createFixture(async (hre) => {
   const { deployments, ethers, getNamedAccounts, getUnnamedAccounts } = hre;

@@ -243,6 +243,7 @@ contract MasterChef is IMasterChef, Initializer, ReentrancyGuard {
         PoolInfo memory pool = updatePool(_pid);
         UserInfo storage user = userInfo[_pid][msg.sender];
 
+        // solhint-disable-next-line reason-string
         require(
             pool.isRegular || whiteList[msg.sender],
             "MasterChef: The address is not available to deposit in this pool"
@@ -361,10 +362,12 @@ contract MasterChef is IMasterChef, Initializer, ReentrancyGuard {
         uint256 _specialFarmRate,
         bool _withUpdate
     ) external onlyOwner {
+        // solhint-disable-next-line reason-string
         require(
             _burnRate > 0 && _regularFarmRate > 0 && _specialFarmRate > 0,
             "MasterChef: Kswap rate must be greater than 0"
         );
+        // solhint-disable-next-line reason-string
         require(
             _burnRate.add(_regularFarmRate).add(_specialFarmRate) ==
                 KSWAP_RATE_TOTAL_PRECISION,
@@ -386,10 +389,12 @@ contract MasterChef is IMasterChef, Initializer, ReentrancyGuard {
     /// @notice Update burn admin address.
     /// @param _newAdmin The new burn admin address.
     function updateBurnAdmin(address _newAdmin) external onlyOwner {
+        // solhint-disable-next-line reason-string
         require(
             _newAdmin != address(0),
             "MasterChef: Burn admin address must be valid"
         );
+        // solhint-disable-next-line reason-string
         require(
             _newAdmin != burnAdmin,
             "MasterChef: Burn admin address is the same with current address"
@@ -403,6 +408,7 @@ contract MasterChef is IMasterChef, Initializer, ReentrancyGuard {
     /// @param _user The address to be updated.
     /// @param _isValid The flag for valid or invalid.
     function updateWhiteList(address _user, bool _isValid) external onlyOwner {
+        // solhint-disable-next-line reason-string
         require(
             _user != address(0),
             "MasterChef: The white list address must be valid"
@@ -415,6 +421,7 @@ contract MasterChef is IMasterChef, Initializer, ReentrancyGuard {
     /// @notice Update boost contract address and max boost factor.
     /// @param _newBoostContract The new address for handling all the share boosts.
     function updateBoostContract(address _newBoostContract) external onlyOwner {
+        // solhint-disable-next-line reason-string
         require(
             _newBoostContract != address(0) &&
                 _newBoostContract != boostContract,
@@ -434,18 +441,22 @@ contract MasterChef is IMasterChef, Initializer, ReentrancyGuard {
         uint256 _pid,
         uint256 _newMultiplier
     ) external nonReentrant {
+        // solhint-disable-next-line reason-string
         require(
             boostContract == msg.sender,
             "Ownable: caller is not the boost contract"
         );
+        // solhint-disable-next-line reason-string
         require(
             _user != address(0),
             "MasterChef: The user address must be valid"
         );
+        // solhint-disable-next-line reason-string
         require(
             poolInfo[_pid].isRegular,
             "MasterChef: Only regular farm could be boosted"
         );
+        // solhint-disable-next-line reason-string
         require(
             _newMultiplier >= BOOST_PRECISION &&
                 _newMultiplier <= MAX_BOOST_PRECISION,
@@ -588,6 +599,7 @@ contract MasterChef is IMasterChef, Initializer, ReentrancyGuard {
         require(_lpToken.balanceOf(address(this)) >= 0, "None BEP20 tokens");
         // stake KSWAP token will cause staked token and reward token mixed up,
         // may cause staked tokens withdraw as reward token,never do it.
+        // solhint-disable-next-line reason-string
         require(_lpToken != kswap, "KSWAP token can't be added to farm pools");
 
         if (_withUpdate) {
@@ -634,7 +646,7 @@ contract MasterChef is IMasterChef, Initializer, ReentrancyGuard {
     }
 
     function _getOwner() internal view returns (address ownerAddress) {
-        // solhint-disable-next-line security/no-inline-assembly
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             ownerAddress := sload(
                 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103
