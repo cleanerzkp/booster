@@ -39,12 +39,7 @@ const newFarms: MasterChefNewPoolInfo[] = [
     allocPoint: 6607929515,
     isRegular: true,
   },
-  {
-    lp: "0x17BA6E4490469D8d567A5af7993B4Ac5fD0AedC4",
-    lpName: "KSWAP-BUSD",
-    allocPoint: 22026431720,
-    isRegular: true,
-  },
+
   {
     lp: "0xFE0c489A8C496816fdBf4d1EC52d69b7F2D1868A",
     lpName: "USDT-WBNB",
@@ -85,12 +80,6 @@ const newFarms: MasterChefNewPoolInfo[] = [
     lp: "0xD17c36273Fbf33Dbd118aBe7B273F75036D013f5",
     lpName: "DOT-BUSD",
     allocPoint: 2202643172,
-    isRegular: true,
-  },
-  {
-    lp: "0xD53FdA6B4238eCd4C4bAD67c18b146399DFBe893",
-    lpName: "KSWAP-WBNB",
-    allocPoint: 24229074890,
     isRegular: true,
   },
 ];

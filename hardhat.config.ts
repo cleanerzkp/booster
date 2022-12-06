@@ -36,6 +36,7 @@ const config: HardhatUserConfig = {
       default: 2,
       bsc: "0x09663794Fa898d3b2F6613D2732E7d998C276aFD",
     },
+    router: "0x9fd7764e2303e7748736d115304350ec64e403b2",
   },
   networks: {
     hardhat: {
@@ -50,7 +51,8 @@ const config: HardhatUserConfig = {
               : undefined,
           }
         : undefined,
-      gas: "auto",
+      //gas: "auto",
+      gas: 3e7,
       tags: ["test", "local"],
       saveDeployments: false,
     },
