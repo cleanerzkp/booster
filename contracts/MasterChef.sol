@@ -15,6 +15,7 @@
 pragma solidity ^0.8.9;
 
 import {IMasterChef} from "./interfaces/IMasterChef.sol";
+import {IMasterChefAdmin} from "./interfaces/IMasterChefAdmin.sol";
 import {IERC20Mintable} from "./interfaces/IERC20Mintable.sol";
 import {Initializer} from "@solarprotocol/solidity-modules/contracts/modules/utils/initializer/Initializer.sol";
 import {ReentrancyGuard} from "@solarprotocol/solidity-modules/contracts/modules/security/reentrancy-guard/ReentrancyGuard.sol";
@@ -23,7 +24,14 @@ import {SimpleBlacklistFacet, LibSimpleBlacklist} from "@solarprotocol/solidity-
 import {SafeMath} from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import {IERC20, SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract MasterChef is IMasterChef, Initializer, ReentrancyGuard {
+contract MasterChef is
+    IMasterChef,
+    IMasterChefAdmin,
+    Initializer,
+    ReentrancyGuard,
+    PausableFacet,
+    SimpleBlacklistFacet
+{
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
     using SafeERC20 for IERC20Mintable;
@@ -63,28 +71,22 @@ contract MasterChef is IMasterChef, Initializer, ReentrancyGuard {
     /// @notice total kswap rate = toBurn + toRegular + toSpecial
     uint256 public constant KSWAP_RATE_TOTAL_PRECISION = 1e12;
     /// @notice The last block number of KSWAP burn action being executed.
-    /// @notice KSWAP distribute % for burn
-    uint256 public kswapRateToBurn = 989202815829;
-    /// @notice KSWAP distribute % for regular farm pool
-    uint256 public kswapRateToRegularFarm = 10797184170;
-    /// @notice KSWAP distribute % for special pools
-    uint256 public kswapRateToSpecialFarm = 1;
+
+    uint256 public kswapRateToBurn;
+    uint256 public kswapRateToRegularFarm;
+    uint256 public kswapRateToSpecialFarm;
 
     uint256 public lastBurnedBlock;
 
-    /// @notice Returns the number of MC pools.
+    /**
+     * @inheritdoc IMasterChef
+     */
     function poolLength() public view returns (uint256 pools) {
         pools = poolInfo.length;
     }
 
     /**
-     * @notice Add a new pool. Can only be called by the owner.
-     * DO NOT add the same LP token more than once. Rewards will be messed up if you do.
-     * @param _allocPoint Number of allocation points for the new pool.
-     * @param _lpToken Address of the LP BEP-20 token.
-     * @param _isRegular Whether the pool is regular or special. LP farms are always "regular". "Special" pools are
-     * @param _withUpdate Whether call "massUpdatePools" operation.
-     * only for KSWAP distributions within Kyoto Swap products.
+     * @inheritdoc IMasterChefAdmin
      */
     function add(
         uint256 _allocPoint,
@@ -96,10 +98,9 @@ contract MasterChef is IMasterChef, Initializer, ReentrancyGuard {
         _add(_allocPoint, _lpToken, _isRegular, _startBlockNumber, _withUpdate);
     }
 
-    /// @notice Update the given pool's KSWAP allocation point. Can only be called by the owner.
-    /// @param _pid The id of the pool. See `poolInfo`.
-    /// @param _allocPoint New number of allocation points for the pool.
-    /// @param _withUpdate Whether call "massUpdatePools" operation.
+    /**
+     * @inheritdoc IMasterChefAdmin
+     */
     function set(
         uint256 _pid,
         uint256 _allocPoint,
@@ -125,9 +126,9 @@ contract MasterChef is IMasterChef, Initializer, ReentrancyGuard {
         emit SetPool(_pid, _allocPoint);
     }
 
-    /// @notice View function for checking pending KSWAP rewards.
-    /// @param _pid The id of the pool. See `poolInfo`.
-    /// @param _user Address of the user.
+    /**
+     * @inheritdoc IMasterChef
+     */
     function pendingKswap(
         uint256 _pid,
         address _user
@@ -165,7 +166,9 @@ contract MasterChef is IMasterChef, Initializer, ReentrancyGuard {
             );
     }
 
-    /// @notice Update kswap reward for all the active pools. Be careful of gas spending!
+    /**
+     * @inheritdoc IMasterChef
+     */
     function massUpdatePools() public {
         uint256 length = poolInfo.length;
         for (uint256 pid = 0; pid < length; ++pid) {
@@ -176,8 +179,9 @@ contract MasterChef is IMasterChef, Initializer, ReentrancyGuard {
         }
     }
 
-    /// @notice Calculates and returns the `amount` of KSWAP per block.
-    /// @param _isRegular If the pool belongs to regular or special.
+    /**
+     * @inheritdoc IMasterChef
+     */
     function kswapPerBlock(
         bool _isRegular
     ) public view returns (uint256 amount) {
@@ -192,16 +196,18 @@ contract MasterChef is IMasterChef, Initializer, ReentrancyGuard {
         }
     }
 
-    /// @notice Calculates and returns the `amount` of KSWAP per block to burn.
+    /**
+     * @inheritdoc IMasterChef
+     */
     function kswapPerBlockToBurn() public view returns (uint256 amount) {
         amount = MASTERCHEF_KSWAP_PER_BLOCK.mul(kswapRateToBurn).div(
             KSWAP_RATE_TOTAL_PRECISION
         );
     }
 
-    /// @notice Update reward variables for the given pool.
-    /// @param _pid The id of the pool. See `poolInfo`.
-    /// @return pool Returns the pool that was updated.
+    /**
+     * @inheritdoc IMasterChef
+     */
     function updatePool(uint256 _pid) public returns (PoolInfo memory pool) {
         pool = poolInfo[_pid];
         if (block.number > pool.lastRewardBlock) {
@@ -233,9 +239,9 @@ contract MasterChef is IMasterChef, Initializer, ReentrancyGuard {
         }
     }
 
-    /// @notice Deposit LP tokens to pool.
-    /// @param _pid The id of the pool. See `poolInfo`.
-    /// @param _amount Amount of LP tokens to deposit.
+    /**
+     * @inheritdoc IMasterChef
+     */
     function deposit(uint256 _pid, uint256 _amount) external nonReentrant {
         LibPausable.enforceNotPaused();
         LibSimpleBlacklist.enforceNotBlacklisted(msg.sender);
@@ -278,9 +284,9 @@ contract MasterChef is IMasterChef, Initializer, ReentrancyGuard {
         emit Deposit(msg.sender, _pid, _amount);
     }
 
-    /// @notice Withdraw LP tokens from pool.
-    /// @param _pid The id of the pool. See `poolInfo`.
-    /// @param _amount Amount of LP tokens to withdraw.
+    /**
+     * @inheritdoc IMasterChef
+     */
     function withdraw(uint256 _pid, uint256 _amount) external nonReentrant {
         LibPausable.enforceNotPaused();
         LibSimpleBlacklist.enforceNotBlacklisted(msg.sender);
@@ -312,8 +318,9 @@ contract MasterChef is IMasterChef, Initializer, ReentrancyGuard {
         emit Withdraw(msg.sender, _pid, _amount);
     }
 
-    /// @notice Withdraw without caring about the rewards. EMERGENCY ONLY.
-    /// @param _pid The id of the pool. See `poolInfo`.
+    /**
+     * @inheritdoc IMasterChef
+     */
     function emergencyWithdraw(uint256 _pid) external nonReentrant {
         LibPausable.enforceNotPaused();
         LibSimpleBlacklist.enforceNotBlacklisted(msg.sender);
@@ -336,8 +343,9 @@ contract MasterChef is IMasterChef, Initializer, ReentrancyGuard {
         emit EmergencyWithdraw(msg.sender, _pid, amount);
     }
 
-    /// @notice Send KSWAP pending for burn to `burnAdmin`.
-    /// @param _withUpdate Whether call "massUpdatePools" operation.
+    /**
+     * @inheritdoc IMasterChefAdmin
+     */
     function burnKswap(bool _withUpdate) public onlyOwner {
         if (_withUpdate) {
             massUpdatePools();
@@ -351,11 +359,9 @@ contract MasterChef is IMasterChef, Initializer, ReentrancyGuard {
         lastBurnedBlock = block.number;
     }
 
-    /// @notice Update the % of KSWAP distributions for burn, regular pools and special pools.
-    /// @param _burnRate The % of KSWAP to burn each block.
-    /// @param _regularFarmRate The % of KSWAP to regular pools each block.
-    /// @param _specialFarmRate The % of KSWAP to special pools each block.
-    /// @param _withUpdate Whether call "massUpdatePools" operation.
+    /**
+     * @inheritdoc IMasterChefAdmin
+     */
     function updateKswapRate(
         uint256 _burnRate,
         uint256 _regularFarmRate,
@@ -386,8 +392,9 @@ contract MasterChef is IMasterChef, Initializer, ReentrancyGuard {
         emit UpdateCakeRate(_burnRate, _regularFarmRate, _specialFarmRate);
     }
 
-    /// @notice Update burn admin address.
-    /// @param _newAdmin The new burn admin address.
+    /**
+     * @inheritdoc IMasterChefAdmin
+     */
     function updateBurnAdmin(address _newAdmin) external onlyOwner {
         // solhint-disable-next-line reason-string
         require(
@@ -404,9 +411,9 @@ contract MasterChef is IMasterChef, Initializer, ReentrancyGuard {
         emit UpdateBurnAdmin(_oldAdmin, _newAdmin);
     }
 
-    /// @notice Update whitelisted addresses for special pools.
-    /// @param _user The address to be updated.
-    /// @param _isValid The flag for valid or invalid.
+    /**
+     * @inheritdoc IMasterChefAdmin
+     */
     function updateWhiteList(address _user, bool _isValid) external onlyOwner {
         // solhint-disable-next-line reason-string
         require(
@@ -418,8 +425,9 @@ contract MasterChef is IMasterChef, Initializer, ReentrancyGuard {
         emit UpdateWhiteList(_user, _isValid);
     }
 
-    /// @notice Update boost contract address and max boost factor.
-    /// @param _newBoostContract The new address for handling all the share boosts.
+    /**
+     * @inheritdoc IMasterChefAdmin
+     */
     function updateBoostContract(address _newBoostContract) external onlyOwner {
         // solhint-disable-next-line reason-string
         require(
@@ -432,10 +440,9 @@ contract MasterChef is IMasterChef, Initializer, ReentrancyGuard {
         emit UpdateBoostContract(_newBoostContract);
     }
 
-    /// @notice Update user boost factor.
-    /// @param _user The user address for boost factor updates.
-    /// @param _pid The pool id for the boost factor updates.
-    /// @param _newMultiplier New boost multiplier.
+    /**
+     * @inheritdoc IMasterChefAdmin
+     */
     function updateBoostMultiplier(
         address _user,
         uint256 _pid,
@@ -485,15 +492,93 @@ contract MasterChef is IMasterChef, Initializer, ReentrancyGuard {
         emit UpdateBoostMultiplier(_user, _pid, prevMultiplier, _newMultiplier);
     }
 
-    /// @notice Get user boost multiplier for specific pool id.
-    /// @param _user The user address.
-    /// @param _pid The pool id.
+    /**
+     * @inheritdoc IMasterChef
+     */
     function getBoostMultiplier(
         address _user,
         uint256 _pid
     ) public view returns (uint256) {
         uint256 multiplier = userInfo[_pid][_user].boostMultiplier;
         return multiplier > BOOST_PRECISION ? multiplier : BOOST_PRECISION;
+    }
+
+    /**
+     * @inheritdoc IMasterChefAdmin
+     */
+    function setTreasuryAddress(address _treasury) external {
+        require(msg.sender == treasury, "dev: wut?");
+        treasury = _treasury;
+        emit SetTreasuryAddress(msg.sender, _treasury);
+    }
+
+    /**
+     * @inheritdoc IMasterChefAdmin
+     */
+    function setPoolLastRewardBlock(
+        uint256 _pid,
+        uint256 newLastRewardBlock
+    ) public onlyOwner {
+        uint256 oldLastRewardBlock = poolInfo[_pid].lastRewardBlock;
+        require(
+            oldLastRewardBlock > block.number &&
+                newLastRewardBlock >= block.number,
+            "Can't modify history"
+        );
+        poolInfo[_pid].lastRewardBlock = newLastRewardBlock;
+    }
+
+    /**
+     * @inheritdoc IMasterChefAdmin
+     */
+    function setPoolLastRewardBlock(
+        uint256[] memory _pids,
+        uint256 newLastRewardBlock
+    ) external onlyOwner {
+        if (newLastRewardBlock == 0) {
+            newLastRewardBlock = block.number + 200;
+        }
+
+        for (uint256 index = 0; index < _pids.length; ++index) {
+            setPoolLastRewardBlock(_pids[index], newLastRewardBlock);
+        }
+    }
+
+    function initialize(
+        IERC20Mintable kswap_,
+        address treasury_,
+        address burnAdmin_,
+        AddNewPoolInfo[] calldata newPools
+    ) external initializer {
+        kswap = kswap_;
+        treasury = treasury_;
+        burnAdmin = burnAdmin_;
+
+        /// @notice KSWAP distribute % for burn
+        kswapRateToBurn = 989202815829;
+        /// @notice KSWAP distribute % for regular farm pool
+        kswapRateToRegularFarm = 10797184170;
+        /// @notice KSWAP distribute % for special pools
+        kswapRateToSpecialFarm = 1;
+
+        uint256 index = 0;
+        uint256 newPoolsLength = newPools.length;
+
+        while (index < newPoolsLength) {
+            _add(
+                newPools[index].allocPoint,
+                newPools[index].lpToken,
+                newPools[index].isRegular,
+                newPools[index].startBlockNumber,
+                false
+            );
+
+            unchecked {
+                ++index;
+            }
+        }
+
+        LibPausable.unpause();
     }
 
     /// @notice Settles, distribute the pending KSWAP rewards for given user.
@@ -516,68 +601,6 @@ contract MasterChef is IMasterChef, Initializer, ReentrancyGuard {
         uint256 pending = accKswap.sub(user.rewardDebt);
         // SafeTransfer KSWAP
         _safeTransfer(_user, pending);
-    }
-
-    function setTreasuryAddress(address _treasury) external {
-        require(msg.sender == treasury, "dev: wut?");
-        treasury = _treasury;
-        emit SetTreasuryAddress(msg.sender, _treasury);
-    }
-
-    function setPoolLastRewardBlock(
-        uint256 _pid,
-        uint256 newLastRewardBlock
-    ) public onlyOwner {
-        uint256 oldLastRewardBlock = poolInfo[_pid].lastRewardBlock;
-        require(
-            oldLastRewardBlock > block.number &&
-                newLastRewardBlock >= block.number,
-            "Can't modify history"
-        );
-        poolInfo[_pid].lastRewardBlock = newLastRewardBlock;
-    }
-
-    function setPoolLastRewardBlock(
-        uint256[] memory _pids,
-        uint256 newLastRewardBlock
-    ) public onlyOwner {
-        if (newLastRewardBlock == 0) {
-            newLastRewardBlock = block.number + 200;
-        }
-
-        for (uint256 index = 0; index < _pids.length; ++index) {
-            setPoolLastRewardBlock(_pids[index], newLastRewardBlock);
-        }
-    }
-
-    function initialize(
-        IERC20Mintable kswap_,
-        address treasury_,
-        address burnAdmin_,
-        AddNewPoolInfo[] calldata newPools
-    ) external initializer {
-        kswap = kswap_;
-        treasury = treasury_;
-        burnAdmin = burnAdmin_;
-
-        uint256 index = 0;
-        uint256 newPoolsLength = newPools.length;
-
-        while (index < newPoolsLength) {
-            _add(
-                newPools[index].allocPoint,
-                newPools[index].lpToken,
-                newPools[index].isRegular,
-                newPools[index].startBlockNumber,
-                false
-            );
-
-            unchecked {
-                ++index;
-            }
-        }
-
-        LibPausable.unpause();
     }
 
     /**

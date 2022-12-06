@@ -60,26 +60,6 @@ interface IMasterChef {
         bool isRegular;
     }
 
-    struct AddNewPoolInfo {
-        IERC20 lpToken;
-        uint256 allocPoint;
-        uint256 startBlockNumber;
-        bool isRegular;
-    }
-
-    event AddPool(
-        uint256 indexed pid,
-        uint256 allocPoint,
-        IERC20 indexed lpToken,
-        bool isRegular
-    );
-    event SetPool(uint256 indexed pid, uint256 allocPoint);
-    event UpdatePool(
-        uint256 indexed pid,
-        uint256 lastRewardBlock,
-        uint256 lpSupply,
-        uint256 accKswapPerShare
-    );
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
     event EmergencyWithdraw(
@@ -88,19 +68,81 @@ interface IMasterChef {
         uint256 amount
     );
 
-    event UpdateCakeRate(
-        uint256 burnRate,
-        uint256 regularFarmRate,
-        uint256 specialFarmRate
-    );
-    event UpdateBurnAdmin(address indexed oldAdmin, address indexed newAdmin);
-    event UpdateWhiteList(address indexed user, bool isValid);
-    event UpdateBoostContract(address indexed boostContract);
-    event UpdateBoostMultiplier(
-        address indexed user,
-        uint256 pid,
-        uint256 oldMultiplier,
-        uint256 newMultiplier
-    );
-    event SetTreasuryAddress(address indexed user, address treasury);
+    /**
+     * @notice Returns the number of MC pools.
+     */
+    function poolLength() external view returns (uint256 pools);
+
+    /**
+     * @notice View function for checking pending KSWAP rewards.
+     *
+     * @param _pid The id of the pool. See `poolInfo`.
+     * @param _user Address of the user.
+     */
+    function pendingKswap(
+        uint256 _pid,
+        address _user
+    ) external view returns (uint256);
+
+    /**
+     * @notice Update kswap reward for all the active pools.
+     * Be careful of gas spending!
+     */
+    function massUpdatePools() external;
+
+    /**
+     * @notice Calculates and returns the `amount` of KSWAP per block.
+     *
+     * @param _isRegular If the pool belongs to regular or special.
+     */
+    function kswapPerBlock(
+        bool _isRegular
+    ) external view returns (uint256 amount);
+
+    /**
+     * @notice Calculates and returns the `amount` of KSWAP per block to burn.
+     */
+    function kswapPerBlockToBurn() external view returns (uint256 amount);
+
+    /**
+     * @notice Update reward variables for the given pool.
+     *
+     * @param _pid The id of the pool. See `poolInfo`.
+     * @return pool Returns the pool that was updated.
+     */
+    function updatePool(uint256 _pid) external returns (PoolInfo memory pool);
+
+    /**
+     * @notice Deposit LP tokens to pool.
+     *
+     * @param _pid The id of the pool. See `poolInfo`.
+     * @param _amount Amount of LP tokens to deposit.
+     */
+    function deposit(uint256 _pid, uint256 _amount) external;
+
+    /**
+     * @notice Withdraw LP tokens from pool.
+     *
+     * @param _pid The id of the pool. See `poolInfo`.
+     * @param _amount Amount of LP tokens to withdraw.
+     */
+    function withdraw(uint256 _pid, uint256 _amount) external;
+
+    /**
+     * @notice Withdraw without caring about the rewards. EMERGENCY ONLY.
+     *
+     * @param _pid The id of the pool. See `poolInfo`.
+     */
+    function emergencyWithdraw(uint256 _pid) external;
+
+    /**
+     * @notice Get user boost multiplier for specific pool id.
+     *
+     * @param _user The user address.
+     * @param _pid The pool id.
+     */
+    function getBoostMultiplier(
+        address _user,
+        uint256 _pid
+    ) external view returns (uint256);
 }
