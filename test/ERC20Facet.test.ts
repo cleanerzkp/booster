@@ -33,10 +33,9 @@ describe("ERC20Facet", () => {
     });
 
     it("Should mint correct vault balances", async () => {
-      const { Token, namedAccounts } = await setupTest();
-      const { treasury } = namedAccounts;
+      const { Token, owner } = await setupTest();
 
-      expect(await Token.balanceOf(treasury.address)).to.be.equal(
+      expect(await Token.balanceOf(owner.address)).to.be.equal(
         INITIAL_MINT_AMOUNT
       );
     });

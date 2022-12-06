@@ -14,17 +14,16 @@
 
 pragma solidity ^0.8.9;
 
+import {IERC20Mintable} from "./interfaces/IERC20Mintable.sol";
 import {Initializer} from "@solarprotocol/solidity-modules/contracts/modules/utils/initializer/Initializer.sol";
-import {LibERC20} from "@solarprotocol/solidity-modules/contracts/modules/token/ERC20/LibERC20.sol";
-import {ERC20Facet} from "@solarprotocol/solidity-modules/contracts/modules/token/ERC20/facets/ERC20Facet.sol";
-import {AccessControlFacet} from "@solarprotocol/solidity-modules/contracts/modules/access/AccessControlFacet.sol";
-import {PausableFacet} from "@solarprotocol/solidity-modules/contracts/modules/pausable/PausableFacet.sol";
-import {SimpleBlacklistFacet} from "@solarprotocol/solidity-modules/contracts/modules/blacklist/SimpleBlacklistFacet.sol";
-import {LibAccessControl} from "@solarprotocol/solidity-modules/contracts/modules/access/LibAccessControl.sol";
+import {ERC20Facet, LibERC20} from "@solarprotocol/solidity-modules/contracts/modules/token/ERC20/facets/ERC20Facet.sol";
+import {AccessControlFacet, LibAccessControl} from "@solarprotocol/solidity-modules/contracts/modules/access/AccessControlFacet.sol";
 import {LibRoles} from "@solarprotocol/solidity-modules/contracts/modules/access/LibRoles.sol";
-import {LibPausable} from "@solarprotocol/solidity-modules/contracts/modules/pausable/LibPausable.sol";
+import {PausableFacet, LibPausable} from "@solarprotocol/solidity-modules/contracts/modules/pausable/PausableFacet.sol";
+import {SimpleBlacklistFacet} from "@solarprotocol/solidity-modules/contracts/modules/blacklist/SimpleBlacklistFacet.sol";
 
 contract KswapToken is
+    IERC20Mintable,
     Initializer,
     ERC20Facet,
     AccessControlFacet,
