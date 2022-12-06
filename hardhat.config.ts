@@ -30,9 +30,11 @@ const config: HardhatUserConfig = {
     owner: {
       default: 1,
       bsc: "0xe56A248C316172D71238a30EbE936cD50bC91dcc",
+      bscTest: "0xF6c9eBd49C948888B921F150b03cF63a7Ab58a3A",
     },
     treasury: {
-      default: "0x09663794Fa898d3b2F6613D2732E7d998C276aFD",
+      default: 2,
+      bsc: "0x09663794Fa898d3b2F6613D2732E7d998C276aFD",
     },
   },
   networks: {
@@ -64,6 +66,18 @@ const config: HardhatUserConfig = {
       url: nodeUrl("bsc"),
       accounts: accounts("bsc"),
       tags: ["production"],
+      verify: {
+        etherscan: {
+          apiKey: process.env.BSCSCAN_API_KEY,
+        },
+      },
+    },
+    bscTest: {
+      live: true,
+      chainId: 56,
+      url: nodeUrl("bsc"),
+      accounts: accounts("bsc"),
+      tags: ["production", "test"],
       verify: {
         etherscan: {
           apiKey: process.env.BSCSCAN_API_KEY,
