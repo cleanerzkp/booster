@@ -3,7 +3,7 @@ import { DeployFunction } from "hardhat-deploy/dist/types";
 import { basename } from "path";
 import { ethers } from "hardhat";
 import { MasterChefNewPoolInfo } from "../utils/types";
-import { KswapToken } from "../typechain-types";
+import { KswapToken, MasterChef } from "../typechain-types";
 import { MANAGER_ROLE, MINTER_ROLE } from "../test/constants";
 
 const START_BLOCK_NUMBER = 23707200;
@@ -107,47 +107,62 @@ const getNewFarms = () =>
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments, getNamedAccounts } = hre;
-  const { deploy } = deployments;
+  const { deploy, catchUnknownSigner } = deployments;
 
   const { deployer, owner, treasury } = await getNamedAccounts();
 
-  const kswapDeployment = await deploy("KswapToken", {
-    contract: "KswapToken",
-    from: deployer,
-    proxy: {
-      owner: owner,
-      execute: {
-        methodName: "initialize",
-        args: [owner, [owner], [ethers.utils.parseEther((851e5).toString())]],
+  await catchUnknownSigner(
+    deploy("KswapToken", {
+      contract: "KswapToken",
+      from: deployer,
+      proxy: {
+        owner: owner,
+        execute: {
+          init: {
+            methodName: "initialize",
+            args: [
+              owner,
+              [owner],
+              [ethers.utils.parseEther((851e5).toString())],
+            ],
+          },
+        },
       },
-    },
-    skipIfAlreadyDeployed: true,
-    log: true,
-  });
-
-  const masterChefDeployment = await deploy("MasterChef", {
-    contract: "MasterChef",
-    from: deployer,
-    proxy: {
-      owner: owner,
-      execute: {
-        methodName: "initialize",
-        args: [kswapDeployment.address, treasury, owner, getNewFarms()],
-      },
-    },
-    skipIfAlreadyDeployed: true,
-    log: true,
-  });
+      log: true,
+    })
+  );
 
   const kswapContract = (await ethers.getContract("KswapToken")) as KswapToken;
+
+  await catchUnknownSigner(
+    deploy("MasterChef", {
+      contract: "MasterChef",
+      from: deployer,
+      proxy: {
+        owner: owner,
+        execute: {
+          init: {
+            methodName: "initialize",
+            args: [kswapContract.address, treasury, owner, getNewFarms()],
+          },
+        },
+      },
+      log: true,
+    })
+  );
+
+  const masterChefContract = (await ethers.getContract(
+    "MasterChef"
+  )) as MasterChef;
+
   const hasMinterRole = await kswapContract.hasRole(
     MINTER_ROLE,
-    masterChefDeployment.address
+    masterChefContract.address
   );
   if (!hasMinterRole) {
     await kswapContract
       .connect(await ethers.getSigner(deployer))
-      .grantRole(MINTER_ROLE, masterChefDeployment.address);
+      .grantRole(MINTER_ROLE, masterChefContract.address);
 
     await kswapContract
       .connect(await ethers.getSigner(deployer))
