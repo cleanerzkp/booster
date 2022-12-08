@@ -40,7 +40,7 @@ contract MasterChef is
     using SafeERC20 for IERC20Mintable;
 
     bytes32 public constant RATES_MANAGER_ROLE =
-        keccak256("MASTER_CHEF_RATES_MANAGER_ROLE");
+        keccak256("RATES_MANAGER_ROLE");
 
     IERC20Mintable public kswap;
 
@@ -739,8 +739,11 @@ contract MasterChef is
     }
 
     function reinitialize2() external onlyOwner reinitializer(2) {
-        LibAccessControl.grantRole(LibRoles.DEFAULT_ADMIN_ROLE, _getOwner());
-        LibAccessControl.grantRole(LibRoles.MANAGER_ROLE, _getOwner());
+        address owner = _getOwner();
+
+        LibAccessControl.grantRole(LibRoles.DEFAULT_ADMIN_ROLE, owner);
+        LibAccessControl.grantRole(LibRoles.MANAGER_ROLE, owner);
+        LibAccessControl.grantRole(RATES_MANAGER_ROLE, owner);
     }
 
     /*function initialize(
