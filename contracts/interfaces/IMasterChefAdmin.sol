@@ -25,6 +25,11 @@ interface IMasterChefAdmin {
         bool isRegular;
     }
 
+    struct SetPoolAllocationInfo {
+        uint256 pid;
+        uint256 allocPoint;
+    }
+
     event AddPool(
         uint256 indexed pid,
         uint256 allocPoint,
@@ -75,11 +80,38 @@ interface IMasterChefAdmin {
     /**
      * @notice Update the given pool's KSWAP allocation point. Can only be called by the owner.
      *
+     * @param poolAlocations List of SetPoolAllocationInfo to update
+     * @param _withUpdate Whether call "massUpdatePools" operation.
+     */
+    function set(
+        SetPoolAllocationInfo[] calldata poolAlocations,
+        bool _withUpdate
+    ) external;
+
+    /**
+     * @notice Update the given pool's KSWAP allocation point. Can only be called by the owner.
+     *
      * @param _pid The id of the pool. See `poolInfo`.
      * @param _allocPoint New number of allocation points for the pool.
      * @param _withUpdate Whether call "massUpdatePools" operation.
      */
     function set(uint256 _pid, uint256 _allocPoint, bool _withUpdate) external;
+
+    /**
+     * @notice Updates the given pool's allocations and the pool rates.
+     *
+     * @param poolAlocations List of SetPoolAllocationInfo to update
+     * @param _burnRate The % of KSWAP to burn each block.
+     * @param _regularFarmRate The % of KSWAP to regular pools each block.
+     * @param _specialFarmRate The % of KSWAP to special pools each block.
+     */
+    function updateRatesAndPools(
+        SetPoolAllocationInfo[] calldata poolAlocations,
+        uint256 _burnRate,
+        uint256 _regularFarmRate,
+        uint256 _specialFarmRate,
+        bool _withUpdate
+    ) external;
 
     /**
      * @notice Send KSWAP pending for burn to `burnAdmin`.

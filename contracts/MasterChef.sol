@@ -102,28 +102,63 @@ contract MasterChef is
      * @inheritdoc IMasterChefAdmin
      */
     function set(
-        uint256 _pid,
-        uint256 _allocPoint,
+        SetPoolAllocationInfo[] calldata poolAlocations,
         bool _withUpdate
     ) external onlyOwner {
-        // No matter _withUpdate is true or false, we need to execute updatePool once before set the pool parameters.
-        updatePool(_pid);
-
         if (_withUpdate) {
             massUpdatePools();
         }
 
-        if (poolInfo[_pid].isRegular) {
-            totalRegularAllocPoint = totalRegularAllocPoint
-                .sub(poolInfo[_pid].allocPoint)
-                .add(_allocPoint);
-        } else {
-            totalSpecialAllocPoint = totalSpecialAllocPoint
-                .sub(poolInfo[_pid].allocPoint)
-                .add(_allocPoint);
+        uint256 index = 0;
+        uint256 poolAlocationsLength = poolAlocations.length;
+
+        while (index < poolAlocationsLength) {
+            _set(poolAlocations[index].pid, poolAlocations[index].allocPoint);
+
+            unchecked {
+                ++index;
+            }
         }
-        poolInfo[_pid].allocPoint = _allocPoint;
-        emit SetPool(_pid, _allocPoint);
+    }
+
+    /**
+     * @inheritdoc IMasterChefAdmin
+     */
+    function set(
+        uint256 _pid,
+        uint256 _allocPoint,
+        bool _withUpdate
+    ) external onlyOwner {
+        if (_withUpdate) {
+            massUpdatePools();
+        }
+
+        _set(_pid, _allocPoint);
+    }
+
+    function updateRatesAndPools(
+        SetPoolAllocationInfo[] calldata poolAlocations,
+        uint256 _burnRate,
+        uint256 _regularFarmRate,
+        uint256 _specialFarmRate,
+        bool _withUpdate
+    ) external onlyOwner {
+        if (_withUpdate) {
+            massUpdatePools();
+        }
+
+        uint256 index = 0;
+        uint256 poolAlocationsLength = poolAlocations.length;
+
+        while (index < poolAlocationsLength) {
+            _set(poolAlocations[index].pid, poolAlocations[index].allocPoint);
+
+            unchecked {
+                ++index;
+            }
+        }
+
+        _updateKswapRate(_burnRate, _regularFarmRate, _specialFarmRate);
     }
 
     /**
@@ -368,28 +403,11 @@ contract MasterChef is
         uint256 _specialFarmRate,
         bool _withUpdate
     ) external onlyOwner {
-        // solhint-disable-next-line reason-string
-        require(
-            _burnRate > 0 && _regularFarmRate > 0 && _specialFarmRate > 0,
-            "MasterChef: Kswap rate must be greater than 0"
-        );
-        // solhint-disable-next-line reason-string
-        require(
-            _burnRate.add(_regularFarmRate).add(_specialFarmRate) ==
-                KSWAP_RATE_TOTAL_PRECISION,
-            "MasterChef: Total rate must be 1e12"
-        );
         if (_withUpdate) {
             massUpdatePools();
         }
-        // burn kswap base on old burn kswap rate
-        burnKswap(false);
 
-        kswapRateToBurn = _burnRate;
-        kswapRateToRegularFarm = _regularFarmRate;
-        kswapRateToSpecialFarm = _specialFarmRate;
-
-        emit UpdateCakeRate(_burnRate, _regularFarmRate, _specialFarmRate);
+        _updateKswapRate(_burnRate, _regularFarmRate, _specialFarmRate);
     }
 
     /**
@@ -648,6 +666,62 @@ contract MasterChef is
             })
         );
         emit AddPool(lpToken.length.sub(1), _allocPoint, _lpToken, _isRegular);
+    }
+
+    /**
+     * @notice Update the given pool's KSWAP allocation point. Can only be called by the owner.
+     *
+     * @param _pid The id of the pool. See `poolInfo`.
+     * @param _allocPoint New number of allocation points for the pool.
+     */
+    function _set(uint256 _pid, uint256 _allocPoint) internal {
+        // No matter _withUpdate is true or false, we need to execute updatePool once before set the pool parameters.
+        updatePool(_pid);
+
+        if (poolInfo[_pid].isRegular) {
+            totalRegularAllocPoint = totalRegularAllocPoint
+                .sub(poolInfo[_pid].allocPoint)
+                .add(_allocPoint);
+        } else {
+            totalSpecialAllocPoint = totalSpecialAllocPoint
+                .sub(poolInfo[_pid].allocPoint)
+                .add(_allocPoint);
+        }
+        poolInfo[_pid].allocPoint = _allocPoint;
+        emit SetPool(_pid, _allocPoint);
+    }
+
+    /**
+     * @notice Update the % of KSWAP distributions for burn, regular pools and special pools.
+     *
+     * @param _burnRate The % of KSWAP to burn each block.
+     * @param _regularFarmRate The % of KSWAP to regular pools each block.
+     * @param _specialFarmRate The % of KSWAP to special pools each block.
+     */
+    function _updateKswapRate(
+        uint256 _burnRate,
+        uint256 _regularFarmRate,
+        uint256 _specialFarmRate
+    ) internal {
+        // solhint-disable-next-line reason-string
+        require(
+            _burnRate > 0 && _regularFarmRate > 0 && _specialFarmRate > 0,
+            "MasterChef: Kswap rate must be greater than 0"
+        );
+        // solhint-disable-next-line reason-string
+        require(
+            _burnRate.add(_regularFarmRate).add(_specialFarmRate) ==
+                KSWAP_RATE_TOTAL_PRECISION,
+            "MasterChef: Total rate must be 1e12"
+        );
+        // burn kswap base on old burn kswap rate
+        burnKswap(false);
+
+        kswapRateToBurn = _burnRate;
+        kswapRateToRegularFarm = _regularFarmRate;
+        kswapRateToSpecialFarm = _specialFarmRate;
+
+        emit UpdateCakeRate(_burnRate, _regularFarmRate, _specialFarmRate);
     }
 
     /// @notice Safe Transfer KSWAP.
