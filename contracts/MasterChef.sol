@@ -21,6 +21,8 @@ import {Initializer} from "@solarprotocol/solidity-modules/contracts/modules/uti
 import {ReentrancyGuard} from "@solarprotocol/solidity-modules/contracts/modules/security/reentrancy-guard/ReentrancyGuard.sol";
 import {PausableFacet, LibPausable} from "@solarprotocol/solidity-modules/contracts/modules/pausable/PausableFacet.sol";
 import {SimpleBlacklistFacet, LibSimpleBlacklist} from "@solarprotocol/solidity-modules/contracts/modules/blacklist/SimpleBlacklistFacet.sol";
+import {AccessControlFacet, LibAccessControl} from "@solarprotocol/solidity-modules/contracts/modules/access/AccessControlFacet.sol";
+import {LibRoles} from "@solarprotocol/solidity-modules/contracts/modules/access/LibRoles.sol";
 import {SafeMath} from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import {IERC20, SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -30,11 +32,15 @@ contract MasterChef is
     Initializer,
     ReentrancyGuard,
     PausableFacet,
-    SimpleBlacklistFacet
+    SimpleBlacklistFacet,
+    AccessControlFacet
 {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
     using SafeERC20 for IERC20Mintable;
+
+    bytes32 public constant RATES_MANAGER_ROLE =
+        keccak256("MASTER_CHEF_RATES_MANAGER_ROLE");
 
     IERC20Mintable public kswap;
 
@@ -94,7 +100,9 @@ contract MasterChef is
         bool _isRegular,
         uint256 _startBlockNumber,
         bool _withUpdate
-    ) external onlyOwner {
+    ) external {
+        LibAccessControl.enforceRole(LibRoles.MANAGER_ROLE);
+
         _add(_allocPoint, _lpToken, _isRegular, _startBlockNumber, _withUpdate);
     }
 
@@ -104,7 +112,9 @@ contract MasterChef is
     function set(
         SetPoolAllocationInfo[] calldata poolAlocations,
         bool _withUpdate
-    ) external onlyOwner {
+    ) external {
+        LibAccessControl.enforceRole(LibRoles.MANAGER_ROLE);
+
         if (_withUpdate) {
             massUpdatePools();
         }
@@ -124,11 +134,9 @@ contract MasterChef is
     /**
      * @inheritdoc IMasterChefAdmin
      */
-    function set(
-        uint256 _pid,
-        uint256 _allocPoint,
-        bool _withUpdate
-    ) external onlyOwner {
+    function set(uint256 _pid, uint256 _allocPoint, bool _withUpdate) external {
+        LibAccessControl.enforceRole(LibRoles.MANAGER_ROLE);
+
         if (_withUpdate) {
             massUpdatePools();
         }
@@ -142,7 +150,9 @@ contract MasterChef is
         uint256 _regularFarmRate,
         uint256 _specialFarmRate,
         bool _withUpdate
-    ) external onlyOwner {
+    ) external {
+        LibAccessControl.enforceRole(RATES_MANAGER_ROLE);
+
         if (_withUpdate) {
             massUpdatePools();
         }
@@ -381,7 +391,9 @@ contract MasterChef is
     /**
      * @inheritdoc IMasterChefAdmin
      */
-    function burnKswap(bool _withUpdate) public onlyOwner {
+    function burnKswap(bool _withUpdate) public {
+        LibAccessControl.enforceRole(LibRoles.MANAGER_ROLE);
+
         if (_withUpdate) {
             massUpdatePools();
         }
@@ -402,7 +414,9 @@ contract MasterChef is
         uint256 _regularFarmRate,
         uint256 _specialFarmRate,
         bool _withUpdate
-    ) external onlyOwner {
+    ) external {
+        LibAccessControl.enforceRole(LibRoles.MANAGER_ROLE);
+
         if (_withUpdate) {
             massUpdatePools();
         }
@@ -413,7 +427,9 @@ contract MasterChef is
     /**
      * @inheritdoc IMasterChefAdmin
      */
-    function updateBurnAdmin(address _newAdmin) external onlyOwner {
+    function updateBurnAdmin(address _newAdmin) external {
+        LibAccessControl.enforceRole(LibRoles.MANAGER_ROLE);
+
         // solhint-disable-next-line reason-string
         require(
             _newAdmin != address(0),
@@ -432,7 +448,9 @@ contract MasterChef is
     /**
      * @inheritdoc IMasterChefAdmin
      */
-    function updateWhiteList(address _user, bool _isValid) external onlyOwner {
+    function updateWhiteList(address _user, bool _isValid) external {
+        LibAccessControl.enforceRole(LibRoles.MANAGER_ROLE);
+
         // solhint-disable-next-line reason-string
         require(
             _user != address(0),
@@ -446,7 +464,9 @@ contract MasterChef is
     /**
      * @inheritdoc IMasterChefAdmin
      */
-    function updateBoostContract(address _newBoostContract) external onlyOwner {
+    function updateBoostContract(address _newBoostContract) external {
+        LibAccessControl.enforceRole(LibRoles.MANAGER_ROLE);
+
         // solhint-disable-next-line reason-string
         require(
             _newBoostContract != address(0) &&
@@ -536,7 +556,9 @@ contract MasterChef is
     function setPoolLastRewardBlock(
         uint256 _pid,
         uint256 newLastRewardBlock
-    ) public onlyOwner {
+    ) public {
+        LibAccessControl.enforceRole(LibRoles.MANAGER_ROLE);
+
         uint256 oldLastRewardBlock = poolInfo[_pid].lastRewardBlock;
         require(
             oldLastRewardBlock > block.number &&
@@ -552,7 +574,9 @@ contract MasterChef is
     function setPoolLastRewardBlock(
         uint256[] memory _pids,
         uint256 newLastRewardBlock
-    ) external onlyOwner {
+    ) external {
+        LibAccessControl.enforceRole(LibRoles.MANAGER_ROLE);
+
         if (newLastRewardBlock == 0) {
             newLastRewardBlock = block.number + 200;
         }
@@ -560,43 +584,6 @@ contract MasterChef is
         for (uint256 index = 0; index < _pids.length; ++index) {
             setPoolLastRewardBlock(_pids[index], newLastRewardBlock);
         }
-    }
-
-    function initialize(
-        IERC20Mintable kswap_,
-        address treasury_,
-        address burnAdmin_,
-        AddNewPoolInfo[] calldata newPools
-    ) external initializer {
-        kswap = kswap_;
-        treasury = treasury_;
-        burnAdmin = burnAdmin_;
-
-        /// @notice KSWAP distribute % for burn
-        kswapRateToBurn = 989202815829;
-        /// @notice KSWAP distribute % for regular farm pool
-        kswapRateToRegularFarm = 10797184170;
-        /// @notice KSWAP distribute % for special pools
-        kswapRateToSpecialFarm = 1;
-
-        uint256 index = 0;
-        uint256 newPoolsLength = newPools.length;
-
-        while (index < newPoolsLength) {
-            _add(
-                newPools[index].allocPoint,
-                newPools[index].lpToken,
-                newPools[index].isRegular,
-                newPools[index].startBlockNumber,
-                false
-            );
-
-            unchecked {
-                ++index;
-            }
-        }
-
-        LibPausable.unpause();
     }
 
     /// @notice Settles, distribute the pending KSWAP rewards for given user.
@@ -750,4 +737,46 @@ contract MasterChef is
             )
         }
     }
+
+    function reinitialize2() external onlyOwner reinitializer(2) {
+        LibAccessControl.grantRole(LibRoles.DEFAULT_ADMIN_ROLE, _getOwner());
+        LibAccessControl.grantRole(LibRoles.MANAGER_ROLE, _getOwner());
+    }
+
+    /*function initialize(
+        IERC20Mintable kswap_,
+        address treasury_,
+        address burnAdmin_,
+        AddNewPoolInfo[] calldata newPools
+    ) external onlyOwner initializer {
+        kswap = kswap_;
+        treasury = treasury_;
+        burnAdmin = burnAdmin_;
+
+        /// @notice KSWAP distribute % for burn
+        kswapRateToBurn = 989202815829;
+        /// @notice KSWAP distribute % for regular farm pool
+        kswapRateToRegularFarm = 10797184170;
+        /// @notice KSWAP distribute % for special pools
+        kswapRateToSpecialFarm = 1;
+
+        uint256 index = 0;
+        uint256 newPoolsLength = newPools.length;
+
+        while (index < newPoolsLength) {
+            _add(
+                newPools[index].allocPoint,
+                newPools[index].lpToken,
+                newPools[index].isRegular,
+                newPools[index].startBlockNumber,
+                false
+            );
+
+            unchecked {
+                ++index;
+            }
+        }
+
+        LibPausable.unpause();
+    }/**/
 }
