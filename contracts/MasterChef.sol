@@ -41,6 +41,9 @@ contract MasterChef is
 
     bytes32 public constant RATES_MANAGER_ROLE =
         keccak256("RATES_MANAGER_ROLE");
+    bytes32 public constant BURN_MANAGER_ROLE = keccak256("BURN_MANAGER_ROLE");
+    bytes32 public constant BOOST_MANAGER_ROLE =
+        keccak256("BOOST_MANAGER_ROLE");
 
     IERC20Mintable public kswap;
 
@@ -48,9 +51,9 @@ contract MasterChef is
     address public treasury;
 
     /// @notice The only address can withdraw all the burn KSWAP.
-    address public burnAdmin;
+    address public DEPRECATED_burnAdmin; // We keep it here,
     /// @notice The contract handles the share boosts.
-    address public boostContract;
+    address public DEPRECATED_boostContract;
 
     /// @notice Info of each MCV2 pool.
     PoolInfo[] public poolInfo;
@@ -392,7 +395,7 @@ contract MasterChef is
      * @inheritdoc IMasterChefAdmin
      */
     function burnKswap(bool _withUpdate) public {
-        LibAccessControl.enforceRole(LibRoles.MANAGER_ROLE);
+        LibAccessControl.enforceRole(BURN_MANAGER_ROLE);
 
         if (_withUpdate) {
             massUpdatePools();
@@ -402,7 +405,7 @@ contract MasterChef is
         uint256 pendingKswapToBurn = multiplier.mul(kswapPerBlockToBurn());
 
         // SafeTransfer KSWAP
-        _safeTransfer(burnAdmin, pendingKswapToBurn);
+        _safeTransfer(_getOwner(), pendingKswapToBurn);
         lastBurnedBlock = block.number;
     }
 
@@ -415,34 +418,13 @@ contract MasterChef is
         uint256 _specialFarmRate,
         bool _withUpdate
     ) external {
-        LibAccessControl.enforceRole(LibRoles.MANAGER_ROLE);
+        LibAccessControl.enforceRole(RATES_MANAGER_ROLE);
 
         if (_withUpdate) {
             massUpdatePools();
         }
 
         _updateKswapRate(_burnRate, _regularFarmRate, _specialFarmRate);
-    }
-
-    /**
-     * @inheritdoc IMasterChefAdmin
-     */
-    function updateBurnAdmin(address _newAdmin) external {
-        LibAccessControl.enforceRole(LibRoles.MANAGER_ROLE);
-
-        // solhint-disable-next-line reason-string
-        require(
-            _newAdmin != address(0),
-            "MasterChef: Burn admin address must be valid"
-        );
-        // solhint-disable-next-line reason-string
-        require(
-            _newAdmin != burnAdmin,
-            "MasterChef: Burn admin address is the same with current address"
-        );
-        address _oldAdmin = burnAdmin;
-        burnAdmin = _newAdmin;
-        emit UpdateBurnAdmin(_oldAdmin, _newAdmin);
     }
 
     /**
@@ -464,33 +446,13 @@ contract MasterChef is
     /**
      * @inheritdoc IMasterChefAdmin
      */
-    function updateBoostContract(address _newBoostContract) external {
-        LibAccessControl.enforceRole(LibRoles.MANAGER_ROLE);
-
-        // solhint-disable-next-line reason-string
-        require(
-            _newBoostContract != address(0) &&
-                _newBoostContract != boostContract,
-            "MasterChef: New boost contract address must be valid"
-        );
-
-        boostContract = _newBoostContract;
-        emit UpdateBoostContract(_newBoostContract);
-    }
-
-    /**
-     * @inheritdoc IMasterChefAdmin
-     */
     function updateBoostMultiplier(
         address _user,
         uint256 _pid,
         uint256 _newMultiplier
     ) external nonReentrant {
-        // solhint-disable-next-line reason-string
-        require(
-            boostContract == msg.sender,
-            "Ownable: caller is not the boost contract"
-        );
+        LibAccessControl.enforceRole(BOOST_MANAGER_ROLE);
+
         // solhint-disable-next-line reason-string
         require(
             _user != address(0),
@@ -736,6 +698,19 @@ contract MasterChef is
                 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103
             )
         }
+    }
+
+    function reinitialize3(
+        address aprManager
+    ) external onlyOwner reinitializer(3) {
+        address owner = _getOwner();
+
+        require(msg.sender == owner, "Only owner can initialize");
+
+        LibAccessControl.grantRole(BURN_MANAGER_ROLE, owner);
+        LibAccessControl.grantRole(BOOST_MANAGER_ROLE, owner);
+        LibAccessControl.grantRole(BURN_MANAGER_ROLE, aprManager);
+        LibAccessControl.grantRole(RATES_MANAGER_ROLE, aprManager);
     }
 
     function reinitialize2() external onlyOwner reinitializer(2) {
