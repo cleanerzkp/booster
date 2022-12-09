@@ -85,6 +85,26 @@ interface IMasterChef {
     ) external view returns (uint256);
 
     /**
+     * @notice View function for checking pending KSWAP rewards on multiple pools.
+     *
+     * @param _pids The list of pool ids. See `poolInfo`.
+     * @param _user Address of the user.
+     *
+     * @return amounts List of pending amounts for pools from `_pids`.
+     */
+    function pendingKswap(
+        uint256[] memory _pids,
+        address _user
+    ) external view returns (uint256[] memory amounts);
+
+    /**
+     * @notice Claims pending KSWAP for the caller.
+     *
+     * @param _pids The list of pool ids to claim KSWAP from.
+     */
+    function claimPendingKswap(uint256[] calldata _pids) external;
+
+    /**
      * @notice Update kswap reward for all the active pools.
      * Be careful of gas spending!
      */

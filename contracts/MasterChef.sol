@@ -180,7 +180,7 @@ contract MasterChef is
     function pendingKswap(
         uint256 _pid,
         address _user
-    ) external view returns (uint256) {
+    ) public view returns (uint256) {
         PoolInfo memory pool = poolInfo[_pid];
         UserInfo memory user = userInfo[_pid][_user];
         uint256 accKswapPerShare = pool.accKswapPerShare;
@@ -212,6 +212,25 @@ contract MasterChef is
             boostedAmount.mul(accKswapPerShare).div(ACC_KSWAP_PRECISION).sub(
                 user.rewardDebt
             );
+    }
+
+    /**
+     * @inheritdoc IMasterChef
+     */
+    function pendingKswap(
+        uint256[] calldata _pids,
+        address _user
+    ) external view returns (uint256[] memory amounts) {
+        uint256 index = 0;
+        amounts = new uint256[](_pids.length);
+
+        while (index < _pids.length) {
+            amounts[index] = pendingKswap(_pids[index], _user);
+
+            unchecked {
+                ++index;
+            }
+        }
     }
 
     /**
@@ -330,6 +349,20 @@ contract MasterChef is
         poolInfo[_pid] = pool;
 
         emit Deposit(msg.sender, _pid, _amount);
+    }
+
+    function claimPendingKswap(uint256[] calldata _pids) external {
+        uint256 index = 0;
+
+        while (index < _pids.length) {
+            updatePool(_pids[index]);
+
+            settlePendingKswap(
+                msg.sender,
+                _pids[index],
+                getBoostMultiplier(msg.sender, _pids[index])
+            );
+        }
     }
 
     /**
