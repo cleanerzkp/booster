@@ -106,9 +106,6 @@ const farmList: IFarmParams[] = [
 const TOTAL_POINTS = 1e10;
 const KSWAP_RATE_TOTAL_PRECISION = 1e12;
 const KSWAP_PER_BLOCK = 4e19;
-const kswapRateToRegularFarm = 312821341;
-/*const kswapPerBlock =
-  (KSWAP_PER_BLOCK * kswapRateToRegularFarm) / KSWAP_RATE_TOTAL_PRECISION;/**/
 
 function getUpdatedFarmConfiguration(
   price: number,
@@ -142,7 +139,6 @@ function getUpdatedFarmConfiguration(
    * kswapPerBlock = (KSWAP_PER_BLOCK * kswapRateToRegularFarm) / KSWAP_RATE_TOTAL_PRECISION;
    * k = (b * r) / p
    * r = k * p / b
-   * kswapRateToRegularFarm = ;
    */
 
   return {
@@ -154,7 +150,6 @@ function getUpdatedFarmConfiguration(
 }
 
 async function main() {
-  //const price = 1.794933208563345595946677041358868;
   const price = 1.7;
 
   const masterChefConfig = getUpdatedFarmConfiguration(price, farmList);

@@ -157,6 +157,8 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       .connect(await ethers.getSigner(deployer))
       .renounceRole(MANAGER_ROLE, deployer);
   }
+
+  return true;
 };
 
 export default func;
