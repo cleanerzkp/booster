@@ -36,6 +36,9 @@ const config: HardhatUserConfig = {
       default: 2,
       bsc: "0x09663794Fa898d3b2F6613D2732E7d998C276aFD",
     },
+    aprManager: {
+      default: "0xd07623eca042941d42c2eAf689759DF895550748",
+    },
     router: "0x9fd7764e2303e7748736d115304350ec64e403b2",
   },
   networks: {

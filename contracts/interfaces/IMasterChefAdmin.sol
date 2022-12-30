@@ -136,26 +136,12 @@ interface IMasterChefAdmin {
     ) external;
 
     /**
-     * @notice Update burn admin address.
-     *
-     * @param _newAdmin The new burn admin address.
-     */
-    function updateBurnAdmin(address _newAdmin) external;
-
-    /**
      * @notice Update whitelisted addresses for special pools.
      *
      * @param _user The address to be updated.
      * @param _isValid The flag for valid or invalid.
      */
     function updateWhiteList(address _user, bool _isValid) external;
-
-    /**
-     * @notice Update boost contract address and max boost factor.
-     *
-     * @param _newBoostContract The new address for handling all the share boosts.
-     */
-    function updateBoostContract(address _newBoostContract) external;
 
     /**
      * @notice Update user boost factor.
