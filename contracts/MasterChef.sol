@@ -50,10 +50,10 @@ contract MasterChef is
     // Dev address.
     address public treasury;
 
-    /// @notice The only address can withdraw all the burn KSWAP.
-    address public DEPRECATED_burnAdmin; // We keep it here,
-    /// @notice The contract handles the share boosts.
-    address public DEPRECATED_boostContract;
+    /// @notice DEPRECATED. We keep it to have the storage slots consistant.
+    address public deprecated2;
+    /// @notice DEPRECATED. We keep it to have the storage slots consistant.
+    address public deprecated3;
 
     /// @notice Info of each MCV2 pool.
     PoolInfo[] public poolInfo;
@@ -349,20 +349,6 @@ contract MasterChef is
         poolInfo[_pid] = pool;
 
         emit Deposit(msg.sender, _pid, _amount);
-    }
-
-    function claimPendingKswap(uint256[] calldata _pids) external {
-        uint256 index = 0;
-
-        while (index < _pids.length) {
-            updatePool(_pids[index]);
-
-            settlePendingKswap(
-                msg.sender,
-                _pids[index],
-                getBoostMultiplier(msg.sender, _pids[index])
-            );
-        }
     }
 
     /**
