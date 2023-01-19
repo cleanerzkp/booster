@@ -3,6 +3,7 @@ import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-contract-sizer";
 import "hardhat-deploy";
 import "@nomiclabs/hardhat-ethers";
+import "hardhat-ignore-warnings";
 import { nodeUrl, accounts } from "@solarprotocol/hardhat-utils";
 /*
 import * as tdly from "@tenderly/hardhat-tenderly";
@@ -12,6 +13,7 @@ tdly.setup({
 /**/
 
 import "./tasks/accounts";
+import "./tasks/locks";
 
 const config: HardhatUserConfig = {
   solidity: {

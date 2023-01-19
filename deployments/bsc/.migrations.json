@@ -1,5 +1,6 @@
 {
   "001_deploy": 1670467598,
   "002_upgrade_masterchef": 1670547684,
-  "003_upgrade_masterchef": 1670623179
+  "003_upgrade_masterchef": 1670623179,
+  "004_deploy_tockenlocker": 1672500761
 }
