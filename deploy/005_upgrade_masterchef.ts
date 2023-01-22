@@ -6,7 +6,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments, getNamedAccounts } = hre;
   const { deploy, catchUnknownSigner } = deployments;
 
-  const { deployer, owner, aprManager } = await getNamedAccounts();
+  const { deployer, owner } = await getNamedAccounts();
 
   await catchUnknownSigner(
     deploy("MasterChef", {

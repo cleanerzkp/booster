@@ -49,9 +49,7 @@ contract TokenLocker is
         require(amount > MIN_DEPOSIT_AMOUNT, "Amount < MIN_DEPOSIT_AMOUNT");
         require(amount < MAX_DEPOSIT_AMOUNT, "Amount > MAX_DEPOSIT_AMOUNT");
 
-        if (LibTokenLocker.getApr(duration) == 0) {
-            revert UnsupportedDuration();
-        }
+        assert(LibTokenLocker.getApr(duration) > 0);
 
         LibTokenLocker.deposit(msg.sender, amount, duration);
     }

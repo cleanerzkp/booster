@@ -50,19 +50,10 @@ contract MasterChef is
     // Dev address.
     address public treasury;
 
-<<<<<<< HEAD
-    /// @notice The only address can withdraw all the burn KSWAP.
-    // solhint-disable-next-line var-name-mixedcase
-    address public DEPRECATED_burnAdmin; // We keep it here,
-    /// @notice The contract handles the share boosts.
-    // solhint-disable-next-line var-name-mixedcase
-    address public DEPRECATED_boostContract;
-=======
     /// @notice DEPRECATED. We keep it to have the storage slots consistant.
     address public deprecated2;
     /// @notice DEPRECATED. We keep it to have the storage slots consistant.
     address public deprecated3;
->>>>>>> master
 
     /// @notice Info of each MCV2 pool.
     PoolInfo[] public poolInfo;

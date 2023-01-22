@@ -198,7 +198,8 @@ library LibTokenLocker {
         uint32 duration,
         uint256 newDuration
     ) internal pure returns (uint256 rewardAmount) {
-        return (((reward * 1e10) / duration) * newDuration) / 1e10;
+        return
+            (((reward * DENOMINATOR) / duration) * newDuration) / DENOMINATOR;
     }
 
     function calculateReward(
