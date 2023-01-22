@@ -35,12 +35,12 @@ interface ITokenLocker {
     error LockNotExpired();
 
     /// @notice DEPRECATED
-    event Deposit(
+    /*event Deposit(
         address account,
         uint256 amount,
         uint32 duration,
         uint32 lockedAt
-    );
+    );/**/
 
     event Deposit(
         address account,

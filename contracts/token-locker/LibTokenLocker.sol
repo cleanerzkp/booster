@@ -25,6 +25,7 @@ library LibTokenLocker {
     struct Storage {
         IERC20Mintable lockedToken;
         mapping(address => mapping(uint32 => ITokenLocker.Lock)) accountDurationLock;
+        mapping(address => bool) migrated;
     }
 
     bytes32 private constant STORAGE_SLOT =
@@ -44,6 +45,23 @@ library LibTokenLocker {
         }
         // solhint-enable
     }
+
+    event Deposit(
+        address account,
+        uint256 amount,
+        uint256 reward,
+        uint32 duration,
+        uint32 lockedAt,
+        uint32 expiresAt
+    );
+
+    event Redeem(
+        address account,
+        uint256 amount,
+        uint256 reward,
+        uint32 duration,
+        uint32 lockedAt
+    );
 
     function enforceLockExistsAndExpired(
         address account,
@@ -92,7 +110,14 @@ library LibTokenLocker {
 
         LibERC20.mint(account, lock.amount + lock.reward);
 
-        // TODO: Emit event
+        emit Deposit(
+            account,
+            lock.amount,
+            lock.reward,
+            lock.duration,
+            lock.lockedAt,
+            lock.expiresAt
+        );
     }
 
     function redeem(
@@ -129,9 +154,15 @@ library LibTokenLocker {
 
         lockedToken.safeTransfer(account, redeemedAmount);
 
-        delete s.accountDurationLock[account][duration];
+        emit Redeem(
+            account,
+            redeemedAmount,
+            lock.reward,
+            duration,
+            lock.lockedAt
+        );
 
-        // TODO: Emit event
+        delete s.accountDurationLock[account][duration];
     }
 
     function migrate(
@@ -141,6 +172,8 @@ library LibTokenLocker {
         uint32 timestamp
     ) internal {
         Storage storage s = _storage();
+
+        require(!s.migrated[account], "Account already migrated");
 
         if (s.accountDurationLock[account][duration].amount == 0) {
             ITokenLocker.Lock memory lock = ITokenLocker.Lock({
@@ -155,7 +188,14 @@ library LibTokenLocker {
 
             LibERC20.mint(account, lock.amount + lock.reward);
 
-            // TODO: Emit event
+            emit Deposit(
+                account,
+                lock.amount,
+                lock.reward,
+                lock.duration,
+                lock.lockedAt,
+                lock.expiresAt
+            );
         } else {
             ITokenLocker.Lock storage lock = s.accountDurationLock[account][
                 duration
@@ -173,6 +213,8 @@ library LibTokenLocker {
                 );
             }
 
+            emit Redeem(account, lock.amount, reward, duration, lock.lockedAt);
+
             s.lockedToken.mint(address(this), reward);
 
             lock.amount += reward + amount;
@@ -189,8 +231,17 @@ library LibTokenLocker {
                 LibERC20.mint(account, expectedBalance - balance);
             }
 
-            // TODO: Emit event
+            emit Deposit(
+                account,
+                lock.amount,
+                lock.reward,
+                lock.duration,
+                lock.lockedAt,
+                lock.expiresAt
+            );
         }
+
+        s.migrated[account] = true;
     }
 
     function calculateRewardDiff(
