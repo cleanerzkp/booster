@@ -38,6 +38,7 @@ contract TokenLocker is
 
     /// @notice DEPRECATED
     mapping(address => UserInfo[]) public userInfo;
+    mapping(address => mapping(uint256 => bool)) public userInfoMigrated;
 
     uint256 public constant MIN_DEPOSIT_AMOUNT = 1e18;
     uint256 public constant MAX_DEPOSIT_AMOUNT = 5000e18;
@@ -61,6 +62,13 @@ contract TokenLocker is
         LibTokenLocker.enforceLockExistsAndExpired(msg.sender, duration);
 
         LibTokenLocker.redeem(msg.sender, duration);
+    }
+
+    function getLock(
+        address account,
+        uint32 duration
+    ) external view returns (Lock memory lock) {
+        return LibTokenLocker.getLock(account, duration);
     }
 
     /**
@@ -130,16 +138,18 @@ contract TokenLocker is
             UserInfo[] storage infos = userInfo[accounts[index]];
 
             for (uint256 uIndex = 0; uIndex < infos.length; ++uIndex) {
-                UserInfo storage uInfo = infos[uIndex];
-                LibTokenLocker.migrate(
-                    accounts[index],
-                    uInfo.amount,
-                    uInfo.duration,
-                    uInfo.lockedAt
-                );
-            }
+                if (!userInfoMigrated[accounts[index]][uIndex]) {
+                    UserInfo storage uInfo = infos[uIndex];
+                    LibTokenLocker.migrate(
+                        accounts[index],
+                        uInfo.amount,
+                        uInfo.duration,
+                        uInfo.lockedAt
+                    );
 
-            delete userInfo[accounts[index]];
+                    userInfoMigrated[accounts[index]][uIndex] = true;
+                }
+            }
         }
     }
 

@@ -25,7 +25,6 @@ library LibTokenLocker {
     struct Storage {
         IERC20Mintable lockedToken;
         mapping(address => mapping(uint32 => ITokenLocker.Lock)) accountDurationLock;
-        mapping(address => bool) migrated;
     }
 
     bytes32 private constant STORAGE_SLOT =
@@ -165,6 +164,13 @@ library LibTokenLocker {
         delete s.accountDurationLock[account][duration];
     }
 
+    function getLock(
+        address account,
+        uint32 duration
+    ) internal view returns (ITokenLocker.Lock memory lock) {
+        return _storage().accountDurationLock[account][duration];
+    }
+
     function migrate(
         address account,
         uint256 amount,
@@ -172,8 +178,6 @@ library LibTokenLocker {
         uint32 timestamp
     ) internal {
         Storage storage s = _storage();
-
-        require(!s.migrated[account], "Account already migrated");
 
         if (s.accountDurationLock[account][duration].amount == 0) {
             ITokenLocker.Lock memory lock = ITokenLocker.Lock({
@@ -209,7 +213,7 @@ library LibTokenLocker {
                 reward = calculateRewardDiff(
                     reward,
                     lock.duration,
-                    (lock.expiresAt - block.timestamp)
+                    (lock.expiresAt - timestamp)
                 );
             }
 
@@ -240,8 +244,6 @@ library LibTokenLocker {
                 lock.expiresAt
             );
         }
-
-        s.migrated[account] = true;
     }
 
     function calculateRewardDiff(

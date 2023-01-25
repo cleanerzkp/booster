@@ -136,9 +136,9 @@ const config: HardhatUserConfig = {
   },
   /*
   tenderly: {
-    project: "project",
-    username: "0xFluffyBeard",
-    forkNetwork: "opera",
+    project: "kyoto",
+    username: "SLAB",
+    forkNetwork: "bsc",
     privateVerification: true,
   },
   /**/

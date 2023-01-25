@@ -61,6 +61,13 @@ interface ITokenLocker {
 
     function deposit(uint256 amount, uint32 duration) external;
 
+    function redeem(uint32 duration) external;
+
+    function getLock(
+        address account,
+        uint32 duration
+    ) external view returns (Lock memory lock);
+
     /// @notice DEPRECATED
     function getUserInfoLength(address account) external view returns (uint256);
 
