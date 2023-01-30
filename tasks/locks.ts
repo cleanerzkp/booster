@@ -90,10 +90,10 @@ task("locks", "Prints the list of token locks", async (taskArgs, hre) => {
   )) as TokenLocker;
 
   for (let index = 0; index < accounts.length; index++) {
-    await delay(2000);
+    //await delay(5000);
     const account = accounts[index];
 
-    console.log("Account: " + account);
+    console.log("Account (" + index + "): " + account);
 
     const balance = await locker.balanceOf(account);
     console.log("voKSWAP Balance: " + ethers.utils.formatEther(balance));
@@ -113,7 +113,7 @@ task("locks", "Prints the list of token locks", async (taskArgs, hre) => {
         account +
           ";" +
           ethers.utils.formatEther(userInfo.amount) +
-          ";" +
+          ";0;" +
           userInfo.duration / 60 / 60 / 24 +
           " days" +
           ";" +
@@ -128,9 +128,9 @@ task("locks", "Prints the list of token locks", async (taskArgs, hre) => {
     }
 
     console.log("New locks:");
+    const locks = await locker.getLocks([account, account], durations);
     for (let dIndex = 0; dIndex < durations.length; dIndex++) {
-      const duration = durations[dIndex];
-      const lock = await locker.getLock(account, duration);
+      const lock = locks[dIndex];
 
       if (lock.amount.eq(0)) continue;
 
@@ -140,6 +140,8 @@ task("locks", "Prints the list of token locks", async (taskArgs, hre) => {
         account +
           ";" +
           ethers.utils.formatEther(lock.amount) +
+          ";" +
+          ethers.utils.formatEther(lock.reward) +
           ";" +
           lock.duration / 60 / 60 / 24 +
           " days" +
@@ -261,3 +263,19 @@ task(
     }
   }
 );
+
+task("locks:migrate", "Migrate the locks", async (taskArgs, hre) => {
+  const { ethers, deployments, getNamedAccounts } = hre;
+  const { deployer } = await getNamedAccounts();
+
+  const locker = (await ethers.getContractAt(
+    "TokenLocker",
+    (
+      await deployments.get("TokenLocker")
+    ).address
+  )) as TokenLocker;
+
+  const cLocker = locker.connect(await ethers.getSigner(deployer));
+  const tx = await cLocker.migrate(accounts);
+  console.log(tx);
+});

@@ -213,7 +213,7 @@ library LibTokenLocker {
                 reward = calculateRewardDiff(
                     reward,
                     lock.duration,
-                    (lock.expiresAt - timestamp)
+                    (timestamp - lock.lockedAt)
                 );
             }
 

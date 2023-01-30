@@ -71,6 +71,29 @@ contract TokenLocker is
         return LibTokenLocker.getLock(account, duration);
     }
 
+    function getLocks(
+        address[] calldata accounts,
+        uint32[] calldata durations
+    ) external view returns (Lock[] memory locks) {
+        uint256 length = accounts.length;
+
+        require(length == durations.length, "Length missmatch");
+
+        locks = new Lock[](accounts.length);
+
+        uint256 index = 0;
+
+        while (index < length) {
+            locks[index] = LibTokenLocker.getLock(
+                accounts[index],
+                durations[index]
+            );
+            unchecked {
+                ++index;
+            }
+        }
+    }
+
     /**
      * @inheritdoc IERC20
      */

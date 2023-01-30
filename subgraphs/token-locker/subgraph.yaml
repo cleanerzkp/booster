@@ -8,6 +8,7 @@ dataSources:
     source:
       address: "0xd8e86cfD71A19AcF79B60fB75F0470185C95B06b"
       abi: TokenLocker
+      startBlock: 25123070
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7

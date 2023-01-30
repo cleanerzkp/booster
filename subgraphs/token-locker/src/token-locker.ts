@@ -16,32 +16,6 @@ function createUserEntity(account: Bytes): User {
   return user;
 }
 
-function createAction(
-  user: User,
-  type: string,
-  event: DepositEvent | RedeemEvent
-): Action {
-  log.info("Action event logType: []", [event.logType as string]);
-
-  let action = new Action(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  );
-
-  action.type = type;
-  action.account = user.address;
-  action.user = user.id;
-  action.amount = event.params.amount;
-  action.reward = event.params.reward;
-  action.duration = event.params.duration.toI32();
-  action.lockedAt = event.params.lockedAt.toI32();
-
-  action.blockNumber = event.block.number;
-  action.blockTimestamp = event.block.timestamp;
-  action.transactionHash = event.transaction.hash;
-
-  return action;
-}
-
 export function handleDeposit(event: DepositEvent): void {
   let user = createUserEntity(event.params.account);
 
@@ -60,7 +34,23 @@ export function handleDeposit(event: DepositEvent): void {
 
   lock.save();
 
-  createAction(user, "deposit", event);
+  let action = new Action(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  );
+
+  action.type = "deposit";
+  action.account = user.address;
+  action.user = user.id;
+  action.amount = event.params.amount;
+  action.reward = event.params.reward;
+  action.duration = event.params.duration.toI32();
+  action.lockedAt = event.params.lockedAt.toI32();
+
+  action.blockNumber = event.block.number;
+  action.blockTimestamp = event.block.timestamp;
+  action.transactionHash = event.transaction.hash;
+
+  action.save();
 }
 
 export function handleRedeem(event: RedeemEvent): void {
@@ -71,5 +61,21 @@ export function handleRedeem(event: RedeemEvent): void {
     user.id.concatI32(event.params.duration.toI32()).toHex()
   );
 
-  createAction(user, "redeem", event);
+  let action = new Action(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  );
+
+  action.type = "redeem";
+  action.account = user.address;
+  action.user = user.id;
+  action.amount = event.params.amount;
+  action.reward = event.params.reward;
+  action.duration = event.params.duration.toI32();
+  action.lockedAt = event.params.lockedAt.toI32();
+
+  action.blockNumber = event.block.number;
+  action.blockTimestamp = event.block.timestamp;
+  action.transactionHash = event.transaction.hash;
+
+  action.save();
 }
