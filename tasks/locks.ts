@@ -1,6 +1,5 @@
-import { BigNumber, BigNumberish } from "ethers";
 import { task } from "hardhat/config";
-import { ITokenLocker, TokenLocker } from "../typechain-types";
+import { TokenLocker } from "../typechain-types";
 
 const accounts = [
   "0x02512befcc919f9a5dad6c9b4022b91d9982c443",
@@ -90,7 +89,7 @@ task("locks", "Prints the list of token locks", async (taskArgs, hre) => {
   )) as TokenLocker;
 
   for (let index = 0; index < accounts.length; index++) {
-    //await delay(5000);
+    await delay(1000);
     const account = accounts[index];
 
     console.log("Account (" + index + "): " + account);
@@ -167,8 +166,6 @@ task(
     const { ethers } = hre;
 
     const locker = (await ethers.getContract("TokenLocker")) as TokenLocker;
-
-    const cleanLocks = [];
 
     for (let index = 0; index < accounts.length; index++) {
       const account = accounts[index];

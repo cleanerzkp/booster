@@ -74,9 +74,12 @@ library LibTokenLocker {
             revert ITokenLocker.LockNotFound();
         }
 
+        // solhint-disable not-rely-on-time
+        // slither-disable-next-line weak-prng
         if (block.timestamp < lock.expiresAt) {
             revert ITokenLocker.LockNotExpired();
         }
+        // solhint-enable
     }
 
     function deposit(

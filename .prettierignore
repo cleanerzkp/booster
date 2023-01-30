@@ -8,3 +8,4 @@ typechain-types
 .yarn-cache
 .vscode/slither-results.json
 .local
+subgraphs
