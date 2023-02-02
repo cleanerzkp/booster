@@ -1,0 +1,34 @@
+type User @entity(immutable: true) {
+  id: Bytes!
+  address: String!
+  lock: [Lock!] @derivedFrom(field: "user")
+  actions: [Action!] @derivedFrom(field: "user")
+}
+
+type Lock @entity {
+  id: Bytes!
+  account: String!
+  user: User!
+  amount: BigInt!
+  reward: BigInt!
+  duration: Int!
+  lockedAt: Int!
+  expiresAt: Int!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Action @entity(immutable: true) {
+  id: Bytes!
+  type: String!
+  account: String!
+  user: User!
+  amount: BigInt!
+  reward: BigInt!
+  duration: Int!
+  lockedAt: Int!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}

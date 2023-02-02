@@ -2,5 +2,8 @@
   "001_deploy": 1670467598,
   "002_upgrade_masterchef": 1670547684,
   "003_upgrade_masterchef": 1670623179,
-  "005_upgrade_masterchef": 1674094433
+  "004_deploy_tockenlocker": 1672500761,
+  "005_upgrade_masterchef": 1674094433,
+  "006_upgrade_tockenlocker": 1674755010,
+  "007_upgrade_tockenlocker": 1675302084
 }

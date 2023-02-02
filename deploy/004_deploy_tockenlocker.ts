@@ -8,12 +8,18 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const { deployer, owner } = await getNamedAccounts();
 
+  const kswapTokenAddress = (await deployments.get("KswapToken")).address;
+
   await catchUnknownSigner(
-    deploy("MasterChef", {
-      contract: "MasterChef",
+    deploy("TokenLocker", {
+      contract: "TokenLocker",
       from: deployer,
       proxy: {
         owner: owner,
+        execute: {
+          methodName: "initialize",
+          args: [kswapTokenAddress, owner],
+        },
       },
       log: true,
     })

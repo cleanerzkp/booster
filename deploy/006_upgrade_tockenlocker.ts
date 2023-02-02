@@ -8,18 +8,24 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const { deployer, owner } = await getNamedAccounts();
 
-  await catchUnknownSigner(
-    deploy("MasterChef", {
-      contract: "MasterChef",
+  const tx = await catchUnknownSigner(
+    deploy("TokenLocker", {
+      contract: "TokenLocker",
       from: deployer,
       proxy: {
         owner: owner,
+        execute: {
+          methodName: "reinitialize",
+          args: [[deployer]],
+        },
       },
       log: true,
     })
   );
 
-  return true;
+  if (!tx) {
+    return true;
+  }
 };
 
 export default func;

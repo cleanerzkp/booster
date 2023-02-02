@@ -3,6 +3,8 @@ import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-contract-sizer";
 import "hardhat-deploy";
 import "@nomiclabs/hardhat-ethers";
+//import "hardhat-ignore-warnings";
+import "hardhat-abi-exporter";
 import { nodeUrl, accounts } from "@solarprotocol/hardhat-utils";
 /*
 import * as tdly from "@tenderly/hardhat-tenderly";
@@ -12,6 +14,7 @@ tdly.setup({
 /**/
 
 import "./tasks/accounts";
+import "./tasks/locks";
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -29,6 +32,7 @@ const config: HardhatUserConfig = {
     },
     owner: {
       default: 1,
+      localhost: "0xe56A248C316172D71238a30EbE936cD50bC91dcc",
       bsc: "0xe56A248C316172D71238a30EbE936cD50bC91dcc",
       bscTest: "0xF6c9eBd49C948888B921F150b03cF63a7Ab58a3A",
     },
@@ -64,6 +68,7 @@ const config: HardhatUserConfig = {
       accounts: accounts("localhost"),
       tags: ["test", "local"],
       gas: "auto",
+      saveDeployments: true,
     },
     bsc: {
       live: true,
@@ -102,6 +107,10 @@ const config: HardhatUserConfig = {
       },
     },
   },
+  abiExporter: {
+    runOnCompile: true,
+    clear: true,
+  },
   gasReporter: {
     enabled: process.env.REPORT_GAS == "true" ? true : false,
     coinmarketcap: process.env.COINMARKETCAP_API_KEY,
@@ -127,9 +136,9 @@ const config: HardhatUserConfig = {
   },
   /*
   tenderly: {
-    project: "project",
-    username: "0xFluffyBeard",
-    forkNetwork: "opera",
+    project: "kyoto",
+    username: "SLAB",
+    forkNetwork: "bsc",
     privateVerification: true,
   },
   /**/
