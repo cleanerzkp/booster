@@ -45,6 +45,7 @@ contract MasterChef is
     bytes32 public constant BOOST_MANAGER_ROLE =
         keccak256("BOOST_MANAGER_ROLE");
 
+    // solc-ignore-next-line uninitialized-state
     IERC20Mintable public kswap;
 
     // Dev address.
@@ -61,6 +62,7 @@ contract MasterChef is
     IERC20[] public lpToken;
 
     /// @notice Info of each pool user.
+    // solc-ignore-next-line uninitialized-state
     mapping(uint256 => mapping(address => UserInfo)) public userInfo;
     /// @notice The whitelist of addresses allowed to deposit in special pools.
     mapping(address => bool) public whiteList;
@@ -711,12 +713,14 @@ contract MasterChef is
     }
 
     function _getOwner() internal view returns (address ownerAddress) {
-        // solhint-disable-next-line no-inline-assembly
+        // solhint-disable no-inline-assembly
+        // solc-ignore-next-line assembly
         assembly {
             ownerAddress := sload(
                 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103
             )
         }
+        // solhint-enable
     }
 
     function reinitialize3(
@@ -748,7 +752,7 @@ contract MasterChef is
     ) external onlyOwner initializer {
         kswap = kswap_;
         treasury = treasury_;
-        burnAdmin = burnAdmin_;
+        deprecated2 = burnAdmin_;
 
         /// @notice KSWAP distribute % for burn
         kswapRateToBurn = 989202815829;
@@ -775,5 +779,5 @@ contract MasterChef is
         }
 
         LibPausable.unpause();
-    }/**/
+    } /**/
 }

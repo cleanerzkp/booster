@@ -1,11 +1,11 @@
 type User @entity(immutable: true) {
   id: Bytes!
   address: String!
-  locks: [Lock!] @derivedFrom(field: "user")
+  lock: [Lock!] @derivedFrom(field: "user")
   actions: [Action!] @derivedFrom(field: "user")
 }
 
-type Lock @entity(immutable: true) {
+type Lock @entity {
   id: Bytes!
   account: String!
   user: User!

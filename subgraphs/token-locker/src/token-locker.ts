@@ -17,6 +17,15 @@ function createUserEntity(account: Bytes): User {
 }
 
 export function handleDeposit(event: DepositEvent): void {
+  log.debug("DepositEvent: {}, {}, {}, {}, {}, {}", [
+    event.params.account.toHexString(),
+    event.params.amount.toString(),
+    event.params.reward.toString(),
+    event.params.duration.toString(),
+    event.params.lockedAt.toString(),
+    event.params.expiresAt.toString()
+  ]);
+
   let user = createUserEntity(event.params.account);
 
   let lock = new Lock(user.id.concatI32(event.params.duration.toI32()));
@@ -54,6 +63,14 @@ export function handleDeposit(event: DepositEvent): void {
 }
 
 export function handleRedeem(event: RedeemEvent): void {
+  log.debug("RedeemEvent: {}, {}, {}, {}, {}", [
+    event.params.account.toHexString(),
+    event.params.amount.toString(),
+    event.params.reward.toString(),
+    event.params.duration.toString(),
+    event.params.lockedAt.toString(),
+  ]);
+
   let user = createUserEntity(event.params.account);
 
   store.remove(

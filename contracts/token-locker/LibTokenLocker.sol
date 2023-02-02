@@ -98,6 +98,7 @@ library LibTokenLocker {
             amount += redeem(account, duration);
         }
 
+        // slither-disable-next-line arbitrary-send-erc20
         s.lockedToken.safeTransferFrom(account, address(this), amount);
 
         ITokenLocker.Lock memory lock = ITokenLocker.Lock({
@@ -144,7 +145,7 @@ library LibTokenLocker {
             reward = calculateRewardDiff(
                 reward,
                 lock.duration,
-                (lock.expiresAt - block.timestamp)
+                (block.timestamp - lock.lockedAt)
             );
         }
 
