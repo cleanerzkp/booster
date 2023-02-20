@@ -3,7 +3,7 @@ import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-contract-sizer";
 import "hardhat-deploy";
 import "@nomiclabs/hardhat-ethers";
-//import "hardhat-ignore-warnings";
+import "hardhat-ignore-warnings";
 import "hardhat-abi-exporter";
 import { nodeUrl, accounts } from "@solarprotocol/hardhat-utils";
 /*
