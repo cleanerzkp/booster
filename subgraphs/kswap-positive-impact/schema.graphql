@@ -1,0 +1,16 @@
+type User @entity(immutable: true) {
+  id: Bytes!
+  address: String!
+  contributions: [Contribution!] @derivedFrom(field: "user")
+}
+
+type Contribution @entity(immutable: true) {
+  id: Bytes!
+  user: User!
+  amount: BigInt!
+  price: BigDecimal!
+  value: BigDecimal!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}

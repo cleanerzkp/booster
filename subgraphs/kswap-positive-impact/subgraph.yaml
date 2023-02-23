@@ -1,0 +1,28 @@
+specVersion: 0.0.5
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: PositiveImpact
+    network: bsc
+    source:
+      address: "0xf177d077a8C65BaDE7154bCaB4Ac30005035e7a3"
+      abi: PositiveImpact
+      startBlock: 25899312
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Contributed
+      abis:
+        - name: PositiveImpact
+          file: ./abis/PositiveImpact.json
+        - name: KyotoSwapRouter
+          file: ./abis/KyotoSwapRouter.json
+        - name: KyotoSwapPair
+          file: ./abis/KyotoSwapPair.json
+      eventHandlers:
+        - event: Contributed(address,uint256)
+          handler: handleContributed
+      file: ./src/positive-impact.ts
