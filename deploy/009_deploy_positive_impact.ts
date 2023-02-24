@@ -10,7 +10,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const kswapTokenDeployment = await deployments.get("KswapToken");
 
-  await catchUnknownSigner(
+  const tx = await catchUnknownSigner(
     deploy("PositiveImpact", {
       contract: "PositiveImpact",
       from: deployer,
@@ -27,7 +27,9 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     })
   );
 
-  return true;
+  if (!tx) {
+    return true;
+  }
 };
 
 export default func;

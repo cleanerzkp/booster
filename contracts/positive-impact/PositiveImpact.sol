@@ -35,6 +35,28 @@ contract PositiveImpact is Initializer, PausableFacet, SimpleBlacklistFacet {
         emit Contributed(msg.sender, amount);
     }
 
+    function updateTreasuryAddress(
+        address newTreasuryAddress
+    ) external onlyOwner {
+        treasury = newTreasuryAddress;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == _getOwner(), "NOT_AUTHORIZED");
+        _;
+    }
+
+    function _getOwner() internal view returns (address ownerAddress) {
+        // solhint-disable no-inline-assembly
+        // slither-ignore-next-line assembly
+        assembly {
+            ownerAddress := sload(
+                0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103
+            )
+        }
+        // solhint-enable
+    }
+
     function initialize(IERC20 token_, address treasury_) external initializer {
         token = token_;
         treasury = treasury_;
