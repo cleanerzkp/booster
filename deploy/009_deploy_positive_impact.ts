@@ -6,19 +6,21 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments, getNamedAccounts } = hre;
   const { deploy, catchUnknownSigner } = deployments;
 
-  const { deployer, owner } = await getNamedAccounts();
+  const { deployer, owner, treasury } = await getNamedAccounts();
 
-  const kswapTokenAddress = (await deployments.get("KswapToken")).address;
+  const kswapTokenDeployment = await deployments.get("KswapToken");
 
   const tx = await catchUnknownSigner(
-    deploy("TokenLocker", {
-      contract: "TokenLocker",
+    deploy("PositiveImpact", {
+      contract: "PositiveImpact",
       from: deployer,
       proxy: {
         owner: owner,
         execute: {
-          methodName: "initialize",
-          args: [kswapTokenAddress, owner],
+          init: {
+            methodName: "initialize",
+            args: [kswapTokenDeployment.address, treasury],
+          },
         },
       },
       log: true,

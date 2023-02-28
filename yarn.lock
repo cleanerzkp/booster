@@ -835,7 +835,7 @@
     hardhat "^2.9.7"
     hardhat-deploy "^0.11.10"
 
-"@solarprotocol/solidity-modules@git+https://gitlab.com/solar-labs/solidity-modules.git#feature/erc20":
+"@solarprotocol/solidity-modules@git+https://gitlab.com/solar-labs/solidity-modules.git#5eb85480f0a6e8cf98af3e56574977f85767ae85":
   version "1.0.0"
   resolved "git+https://gitlab.com/solar-labs/solidity-modules.git#5eb85480f0a6e8cf98af3e56574977f85767ae85"
   dependencies:

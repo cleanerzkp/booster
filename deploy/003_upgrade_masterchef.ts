@@ -8,7 +8,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const { deployer, owner, aprManager } = await getNamedAccounts();
 
-  await catchUnknownSigner(
+  const tx = await catchUnknownSigner(
     deploy("MasterChef", {
       contract: "MasterChef",
       from: deployer,
@@ -23,7 +23,9 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     })
   );
 
-  return true;
+  if (!tx) {
+    return true;
+  }
 };
 
 export default func;

@@ -38,7 +38,7 @@ const config: HardhatUserConfig = {
     },
     treasury: {
       default: 2,
-      bsc: "0x09663794Fa898d3b2F6613D2732E7d998C276aFD",
+      bsc: "0x045F449CCa37eBE39eFD85fE1b69C3e5da2A6545",
     },
     aprManager: {
       default: "0xd07623eca042941d42c2eAf689759DF895550748",

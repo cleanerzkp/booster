@@ -740,12 +740,12 @@ contract MasterChef is
         LibAccessControl.grantRole(RATES_MANAGER_ROLE, owner);
     }
 
-    /*function initialize(
+    function initialize(
         IERC20Mintable kswap_,
         address treasury_,
         address burnAdmin_,
         AddNewPoolInfo[] calldata newPools
-    ) external onlyOwner initializer {
+    ) external initializer {
         kswap = kswap_;
         treasury = treasury_;
         deprecated2 = burnAdmin_;
