@@ -34,11 +34,13 @@ contract TokenLocker is
     using SafeERC20 for IERC20;
 
     /// @notice DEPRECATED
-    IERC20 public token;
+    IERC20 public deprecatedToken;
 
     /// @notice DEPRECATED
-    mapping(address => UserInfo[]) public userInfo;
-    mapping(address => mapping(uint256 => bool)) public userInfoMigrated;
+    mapping(address => UserInfo[]) public deprecatedUserInfo;
+    /// @notice DEPRECATED
+    mapping(address => mapping(uint256 => bool))
+        public deprecatedUserInfoMigrated;
 
     uint256 public constant MIN_DEPOSIT_AMOUNT = 1e18;
     uint256 public constant MAX_DEPOSIT_AMOUNT = 5000e18;
@@ -104,7 +106,7 @@ contract TokenLocker is
         // solc-ignore-next-line unused-param
         uint256 amount
     ) external virtual override returns (bool) {
-        revert("ERC20: Nit transferrable");
+        revert("ERC20: Not transferrable");
     }
 
     // solhint-enable
@@ -121,13 +123,13 @@ contract TokenLocker is
         // solc-ignore-next-line unused-param
         uint256 amount
     ) external virtual override returns (bool) {
-        revert("ERC20: Nit transferrable");
+        revert("ERC20: Not transferrable");
     }
 
     // solhint-enable
 
     function initialize(IERC20 token_, address owner) external initializer {
-        token = token_;
+        deprecatedToken = token_;
 
         LibAccessControl.grantRole(LibRoles.DEFAULT_ADMIN_ROLE, owner);
         LibAccessControl.grantRole(LibRoles.MANAGER_ROLE, owner);
@@ -142,7 +144,7 @@ contract TokenLocker is
         LibERC20.setName("KyotoSwap Governance Token");
         LibERC20.setSymbol("voKSWAP");
 
-        LibTokenLocker.setLockedToken(IERC20Mintable(address(token)));
+        LibTokenLocker.setLockedToken(IERC20Mintable(address(deprecatedToken)));
 
         LibPausable.pause();
 
@@ -151,63 +153,6 @@ contract TokenLocker is
                 keccak256("MIGRATION_MANAGER_ROLE"),
                 migrationManagers[index]
             );
-        }
-    }
-
-    function migrate(address[] calldata accounts) external {
-        LibAccessControl.enforceRole(keccak256("MIGRATION_MANAGER_ROLE"));
-
-        for (uint256 index = 0; index < accounts.length; ++index) {
-            UserInfo[] storage infos = userInfo[accounts[index]];
-
-            for (uint256 uIndex = 0; uIndex < infos.length; ++uIndex) {
-                if (!userInfoMigrated[accounts[index]][uIndex]) {
-                    UserInfo storage uInfo = infos[uIndex];
-                    LibTokenLocker.migrate(
-                        accounts[index],
-                        uInfo.amount,
-                        uInfo.duration,
-                        uInfo.lockedAt
-                    );
-
-                    userInfoMigrated[accounts[index]][uIndex] = true;
-                }
-            }
-        }
-    }
-
-    /// @notice DEPRECATED
-    function getUserInfoLength(
-        address account
-    ) external view returns (uint256) {
-        return userInfo[account].length;
-    }
-
-    /// @notice DEPRECATED
-    function getUserInfo(
-        address account,
-        uint256 id
-    ) external view returns (UserInfo memory) {
-        return userInfo[account][id];
-    }
-
-    /// @notice DEPRECATED
-    function getUserInfo(
-        address account
-    ) external view returns (UserInfo[] memory userLockInfo) {
-        UserInfo[] storage userLocks = userInfo[account];
-
-        uint256 length = userLocks.length;
-        uint256 index = 0;
-
-        userLockInfo = new UserInfo[](length);
-
-        while (index < length) {
-            userLockInfo[index] = userLocks[index];
-
-            unchecked {
-                ++index;
-            }
         }
     }
 }
