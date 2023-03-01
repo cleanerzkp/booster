@@ -23,24 +23,9 @@ interface ITokenLocker {
         uint32 expiresAt;
     }
 
-    /// @notice DEPRECATED
-    struct UserInfo {
-        uint256 amount;
-        uint32 duration;
-        uint32 lockedAt;
-    }
-
     error UnsupportedDuration();
     error LockNotFound();
     error LockNotExpired();
-
-    /// @notice DEPRECATED
-    /*event Deposit(
-        address account,
-        uint256 amount,
-        uint32 duration,
-        uint32 lockedAt
-    );/**/
 
     event Deposit(
         address account,
@@ -69,16 +54,10 @@ interface ITokenLocker {
     ) external view returns (Lock memory lock);
 
     /// @notice DEPRECATED
-    function getUserInfoLength(address account) external view returns (uint256);
-
-    /// @notice DEPRECATED
-    function getUserInfo(
-        address account,
-        uint256 id
-    ) external view returns (UserInfo memory);
-
-    /// @notice DEPRECATED
-    function getUserInfo(
-        address account
-    ) external view returns (UserInfo[] memory userLockInfo);
+    /// @dev Used in the first version. Was migrated to new logic.
+    struct UserInfo {
+        uint256 amount;
+        uint32 duration;
+        uint32 lockedAt;
+    }
 }
