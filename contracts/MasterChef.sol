@@ -42,8 +42,6 @@ contract MasterChef is
     bytes32 public constant RATES_MANAGER_ROLE =
         keccak256("RATES_MANAGER_ROLE");
     bytes32 public constant BURN_MANAGER_ROLE = keccak256("BURN_MANAGER_ROLE");
-    bytes32 public constant BOOST_MANAGER_ROLE =
-        keccak256("BOOST_MANAGER_ROLE");
 
     IERC20Mintable public kswap;
 
@@ -86,6 +84,18 @@ contract MasterChef is
     uint256 public kswapRateToSpecialFarm;
 
     uint256 public lastBurnedBlock;
+    /// @notice boostContract
+    address public boostContract;
+
+
+
+    /**
+     * @dev Throws if caller is not the boost contract.
+     */
+    modifier onlyBoostContract() {
+        require(boostContract == msg.sender, "Ownable: caller not boost contract.");
+        _;
+    }
 
     /**
      * @inheritdoc IMasterChef
@@ -469,8 +479,7 @@ contract MasterChef is
         address _user,
         uint256 _pid,
         uint256 _newMultiplier
-    ) external nonReentrant {
-        LibAccessControl.enforceRole(BOOST_MANAGER_ROLE);
+    ) external onlyBoostContract nonReentrant {
 
         // solhint-disable-next-line reason-string
         require(
@@ -719,15 +728,27 @@ contract MasterChef is
         // solhint-enable
     }
 
+    /// @notice Update boost contract address
+    /// @param _newBoostContract  New address for handling boosts
+    function updateBoostContract(address _newBoostContract) external onlyOwner {
+        require(
+            _newBoostContract != address(0) && _newBoostContract != boostContract,
+            "MasterChefV2: New boost contract address must be valid"
+        );
+
+        boostContract = _newBoostContract;
+        emit UpdateBoostContract(_newBoostContract);
+    }
+
+    /// @TODO update initialize of booster contract?
+    
     function reinitialize3(
         address aprManager
     ) external onlyOwner reinitializer(3) {
         address owner = _getOwner();
 
         require(msg.sender == owner, "Only owner can initialize");
-
         LibAccessControl.grantRole(BURN_MANAGER_ROLE, owner);
-        LibAccessControl.grantRole(BOOST_MANAGER_ROLE, owner);
         LibAccessControl.grantRole(BURN_MANAGER_ROLE, aprManager);
         LibAccessControl.grantRole(RATES_MANAGER_ROLE, aprManager);
     }
