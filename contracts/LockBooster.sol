@@ -11,31 +11,46 @@ import {IMasterChefAdmin} from "./interfaces/IMasterChefAdmin.sol";
 
 contract LockerBooster is AccessControlFacet, PausableFacet, Initializer {
     uint256 internal constant DENOMINATOR = 1e10;
-    uint256 public monthlyBoost = 25e2;
-    uint256 public yearlyBoost = 3e5;
-    ITokenLocker tokenLocker;
+    uint256 public monthlyBoost;
+    uint256 public yearlyBoost;
+    ITokenLocker public tokenLocker;
     IMasterChefAdmin public masterChefAdmin;
-
     mapping(address => uint256) public boostedPool;
+    bytes32 public constant BOOST_MANAGER_ROLE =
+        keccak256("BOOST_MANAGER_ROLE");
 
     error UnsupportedDuration();
 
     modifier onlyOwner() {
-        require(msg.sender == _getOwner(), "NOT_AUTHORIZED");
+        LibAccessControl.enforceRole(LibRoles.DEFAULT_ADMIN_ROLE);
         _;
     }
 
-    function _getOwner() internal view returns (address ownerAddress) {
-        // solhint-disable no-inline-assembly
-        // slither-ignore-next-line assembly
-        assembly {
-            ownerAddress := sload(
-                0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103
-            )
-        }
+    modifier onlyBoostManager() {
+        LibAccessControl.enforceRole(BOOST_MANAGER_ROLE);
+        _;
     }
 
-    //@TODO
+    modifier requirementsChecker(
+        address _newaddress,
+        address _oldaddress,
+        bytes32 _role
+    ) {
+        require(_oldaddress != _newaddress, "Old addr == New Addr.");
+        require(
+            LibAccessControl.hasRole(_role, _oldaddress),
+            "Wrong old addr."
+        );
+        require(_newaddress != address(0), "New addr role is zero.");
+        _;
+    }
+
+    /// @notice gas optimization by assigning the boosters in constructor
+    constructor() {
+        monthlyBoost = 25e2;
+        yearlyBoost = 3e5;
+    }
+
     function updateBoost(address _account, uint256 _pid) external onlyOwner {
         uint256 boost = (boostLock(_account) + 100 * 1e6) * 1e4;
         if (_pid == boostedPool[_account]) {
@@ -51,6 +66,14 @@ contract LockerBooster is AccessControlFacet, PausableFacet, Initializer {
         }
     }
 
+    function AdminChecker() external onlyOwner returns (uint256) {
+        return 5;
+    }
+
+    function BoostChecker() external onlyBoostManager returns (uint256) {
+        return 5;
+    }
+
     function boostLock(address _account) public view returns (uint256 boost) {
         LibPausable.enforceNotPaused();
         require(
@@ -58,8 +81,14 @@ contract LockerBooster is AccessControlFacet, PausableFacet, Initializer {
             "TokenLocker not initialized."
         );
 
-        ITokenLocker.Lock memory monthLock = tokenLocker.getLock(_account, 30 days);
-        ITokenLocker.Lock memory yearLock = tokenLocker.getLock(_account, 365 days);
+        ITokenLocker.Lock memory monthLock = tokenLocker.getLock(
+            _account,
+            30 days
+        );
+        ITokenLocker.Lock memory yearLock = tokenLocker.getLock(
+            _account,
+            365 days
+        );
 
         boost = 0;
 
@@ -94,26 +123,48 @@ contract LockerBooster is AccessControlFacet, PausableFacet, Initializer {
     }
 
     function initialize(
+        address _owner,
+        address _boostManager,
         ITokenLocker _tokenLocker,
         IMasterChefAdmin _masterChef
     ) external initializer {
-        address owner = _getOwner();
-
-        require(address(_tokenLocker) != address(0));
+        require(
+            address(_tokenLocker) != address(0) &&
+                address(_masterChef) != address(0) &&
+                _owner != address(0) &&
+                _boostManager != address(0)
+        );
         tokenLocker = _tokenLocker;
-        require(address(_masterChef) != address(0));
         masterChefAdmin = _masterChef;
-
-        LibAccessControl.grantRole(LibRoles.DEFAULT_ADMIN_ROLE, owner);
+        LibAccessControl.grantRole(BOOST_MANAGER_ROLE, _boostManager);
+        LibAccessControl.grantRole(LibRoles.DEFAULT_ADMIN_ROLE, _owner);
     }
 
-    function changeLockerAddr(ITokenLocker _tokenLocker) onlyOwner external {
+    function changeLockerAddr(ITokenLocker _tokenLocker) external onlyOwner {
         require(address(_tokenLocker) != address(0));
         tokenLocker = _tokenLocker;
     }
 
-    function changeMasterChefAddr(IMasterChefAdmin _masterChefAdmin) onlyOwner external {
+    function changeMasterChefAddr(
+        IMasterChefAdmin _masterChefAdmin
+    ) external onlyOwner {
         require(address(_masterChefAdmin) != address(0));
         masterChefAdmin = _masterChefAdmin;
+    }
+
+    function changeBoostManager(
+        address _oldBoostManager,
+        address _newBoostManager
+    )
+        external
+        onlyOwner
+        requirementsChecker(
+            _newBoostManager,
+            _oldBoostManager,
+            BOOST_MANAGER_ROLE
+        )
+    {
+        LibAccessControl.grantRole(BOOST_MANAGER_ROLE, _newBoostManager);
+        LibAccessControl.revokeRole(BOOST_MANAGER_ROLE, _oldBoostManager);
     }
 }
