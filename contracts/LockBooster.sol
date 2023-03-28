@@ -1,36 +1,47 @@
-// SPDX-License-Identifier: None
+ // SPDX-License-Identifier: None
 
 pragma solidity ^0.8.9;
 
-import {PausableFacet, LibPausable} from "@solarprotocol/solidity-modules/contracts/modules/pausable/PausableFacet.sol";
-import {Initializer} from "@solarprotocol/solidity-modules/contracts/modules/utils/initializer/Initializer.sol";
-import {AccessControlFacet, LibAccessControl} from "@solarprotocol/solidity-modules/contracts/modules/access/AccessControlFacet.sol";
-import {LibRoles} from "@solarprotocol/solidity-modules/contracts/modules/access/LibRoles.sol";
+import {PausableFacet, LibPausable} from "./solarprotocol/solidity-modules/contracts/modules/pausable/PausableFacet.sol";
+import {Initializer} from "./solarprotocol/solidity-modules/contracts/modules/utils/initializer/Initializer.sol";
+import {AccessControlFacet, LibAccessControl} from "./solarprotocol/solidity-modules/contracts/modules/access/AccessControlFacet.sol";
+import {LibRoles} from "./solarprotocol/solidity-modules/contracts/modules/access/LibRoles.sol";
 import {ITokenLocker} from "./token-locker/ITokenLocker.sol";
 import {IMasterChefAdmin} from "./interfaces/IMasterChefAdmin.sol";
 
 contract LockerBooster is AccessControlFacet, PausableFacet, Initializer {
+    // Internal constant variables
+    bytes32 public constant BOOST_MANAGER_ROLE =  keccak256("BOOST_MANAGER_ROLE");
+
     uint256 internal constant DENOMINATOR = 1e10;
     uint256 public monthlyBoost;
     uint256 public yearlyBoost;
     ITokenLocker public tokenLocker;
     IMasterChefAdmin public masterChefAdmin;
-    mapping(address => uint256) public boostedPool;
-    bytes32 public constant BOOST_MANAGER_ROLE =
-        keccak256("BOOST_MANAGER_ROLE");
+    mapping(address => User) public boostedUser;  
 
+    // Struct for each boosted user
+    struct User {
+          uint256 boost;
+          uint256 pid;
+      		bool init;
+    }
+
+    // Error handling
     error UnsupportedDuration();
 
+    // Modifier to ensure function is only called by contract owner
     modifier onlyOwner() {
         LibAccessControl.enforceRole(LibRoles.DEFAULT_ADMIN_ROLE);
         _;
     }
 
+    // Modifier to ensure function is only called by boost manager
     modifier onlyBoostManager() {
         LibAccessControl.enforceRole(BOOST_MANAGER_ROLE);
         _;
     }
-
+    // Modifier to check requirements for modifying roles
     modifier requirementsChecker(
         address _newaddress,
         address _oldaddress,
@@ -46,34 +57,59 @@ contract LockerBooster is AccessControlFacet, PausableFacet, Initializer {
     }
 
     /// @notice gas optimization by assigning the boosters in constructor
-    constructor() {
-        monthlyBoost = 25e2;
-        yearlyBoost = 3e5;
+      constructor() {
+        monthlyBoost = 2500; // 25e2
+        yearlyBoost = 300000; // 3e5
     }
-
+      /**
+        * @notice Updates the boost multiplier for the specified account and pool ID in MasterChef
+        * @dev Boost is calculated based on the account's locked tokens in the LockerContract.
+        *  If the account is already boosted in the specified pool, the boost multiplier is updated to the new value.
+        * @param _account The account to update the boost multiplier for.
+        * @param _pid The ID of the pool to update the boost multiplier for.
+        */
     function updateBoost(address _account, uint256 _pid) external onlyOwner {
         uint256 boost = (boostLock(_account) + 100 * 1e6) * 1e4;
-        if (_pid == boostedPool[_account]) {
+        if (_pid == boostedUser[_account].pid) {
             masterChefAdmin.updateBoostMultiplier(_account, _pid, boost);
         } else {
-            masterChefAdmin.updateBoostMultiplier(
+          if(boostedUser[_account].init){
+              masterChefAdmin.updateBoostMultiplier(
                 _account,
-                boostedPool[_account],
+                boostedUser[_account].pid,
                 100 * 1e10
             );
+          }else{
+            boostedUser[_account].init = true;
+          }
             masterChefAdmin.updateBoostMultiplier(_account, _pid, boost);
-            boostedPool[_account] = _pid;
+            boostedUser[_account].pid = _pid;
         }
     }
 
-    function AdminChecker() external onlyOwner returns (uint256) {
-        return 5;
+   function getUsersBoost(address[] memory _users) public view returns (User[] memory) {
+        User[] memory users = new User[](_users.length); 
+        for (uint256 i = 0; i < _users.length; i++) {
+        users[i] = boostedUser[_users[i]];
+        }
+        return users;
     }
-
-    function BoostChecker() external onlyBoostManager returns (uint256) {
-        return 5;
+     
+	/*
+    function getUsersBoost(address[] memory _users) public view returns (address[] memory addressArray, uint256[] memory boostArray, uint256[] memory pidArray, bool[] memory initArray) {
+        addressArray = new address[](_users.length);
+        boostArray = new uint256[](_users.length);
+        pidArray = new uint256[](_users.length);
+        initArray = new bool[](_users.length);
+        for (uint256 i = 0; i < _users.length; i++) {
+            addressArray[i] = _users[i];
+            boostArray[i] = boostedUser[_users[i]].boost;
+            pidArray[i] = boostedUser[_users[i]].pid;
+            initArray[i] = boostedUser[_users[i]].init;
+        }
     }
-
+    */
+  
     function boostLock(address _account) public view returns (uint256 boost) {
         LibPausable.enforceNotPaused();
         require(
@@ -89,22 +125,16 @@ contract LockerBooster is AccessControlFacet, PausableFacet, Initializer {
             _account,
             365 days
         );
-
         boost = 0;
-
         if (monthLock.duration > 0 && monthLock.amount > 0) {
             // struct validation
             boost += calculateBoost(monthLock.amount, monthLock.duration);
         }
-
         if (yearLock.duration > 0 && yearLock.amount > 0) {
             // struct validation
             boost += calculateBoost(yearLock.amount, yearLock.duration);
         }
-
-        if (boost >= 15e16) return 15e16 / DENOMINATOR;
-
-        return boost / DENOMINATOR;
+        return boost >= 15e16 ? 15e16 / DENOMINATOR : boost / DENOMINATOR;
     }
 
     function calculateBoost(
