@@ -91,7 +91,8 @@ contract LockerBooster is AccessControlFacet, PausableFacet, Initializer, ILockB
      * @param _pid The ID of the pool to update the boost multiplier for.
      */
     function _updateBoost(address _account, uint256 _pid) internal{
-        uint256 boost = (calculateUserBoost(_account) + 100 * 1e6) * 1e4;
+        uint256 calculatedBoost =  calculateUserBoost(_account);
+        uint256 boost = (calculatedBoost + 100 * 1e6) * 1e4;
         User storage user = boostedUser[_account];
         if (_pid == user.pid) {
             masterChefAdmin.updateBoostMultiplier(_account, _pid, boost);
@@ -104,7 +105,7 @@ contract LockerBooster is AccessControlFacet, PausableFacet, Initializer, ILockB
             masterChefAdmin.updateBoostMultiplier(_account, _pid, boost);
             user.pid = _pid;
         }
-        user.boost = boost;
+        user.boost = calculatedBoost;
     }
 
     /**
