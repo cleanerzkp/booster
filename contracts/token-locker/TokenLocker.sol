@@ -22,6 +22,7 @@ import {AccessControlFacet, LibAccessControl} from "@solarprotocol/solidity-modu
 import {LibRoles} from "@solarprotocol/solidity-modules/contracts/modules/access/LibRoles.sol";
 import {ERC20Facet, LibERC20, IERC20} from "@solarprotocol/solidity-modules/contracts/modules/token/ERC20/facets/ERC20Facet.sol";
 import {SafeMath} from "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import {ILockBooster} from "../interfaces/ILockBooster.sol";
 
 contract TokenLocker is
     ITokenLocker,
@@ -32,6 +33,8 @@ contract TokenLocker is
     ERC20Facet
 {
     using SafeERC20 for IERC20;
+
+    ILockBooster public boosterContract;
 
     /// @notice DEPRECATED
     IERC20 public deprecatedToken;
@@ -44,6 +47,11 @@ contract TokenLocker is
 
     uint256 public constant MIN_DEPOSIT_AMOUNT = 1e18;
     uint256 public constant MAX_DEPOSIT_AMOUNT = 5000e18;
+
+    modifier onlyOwner() {
+        LibAccessControl.enforceRole(LibRoles.DEFAULT_ADMIN_ROLE);
+        _;
+    }
 
     function deposit(uint256 amount, uint32 duration) external {
         LibPausable.enforceNotPaused();
@@ -64,6 +72,11 @@ contract TokenLocker is
         LibTokenLocker.enforceLockExistsAndExpired(msg.sender, duration);
 
         LibTokenLocker.redeem(msg.sender, duration);
+
+        if(address(boosterContract) != address(0)){
+            boosterContract.redeemBoost(msg.sender);
+        }
+        
     }
 
     function getLock(
@@ -154,5 +167,9 @@ contract TokenLocker is
                 migrationManagers[index]
             );
         }
+    }
+    /// @notice no chceck for address 0 due to booster off and on switch
+    function changeLockBosterAddr(ILockBooster _newAddr) external onlyOwner {
+        boosterContract = _newAddr;
     }
 }

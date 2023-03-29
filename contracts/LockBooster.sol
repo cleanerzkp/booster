@@ -2,14 +2,15 @@
 
 pragma solidity ^0.8.9;
 
-import {PausableFacet, LibPausable} from "./solarprotocol/solidity-modules/contracts/modules/pausable/PausableFacet.sol";
-import {Initializer} from "./solarprotocol/solidity-modules/contracts/modules/utils/initializer/Initializer.sol";
-import {AccessControlFacet, LibAccessControl} from "./solarprotocol/solidity-modules/contracts/modules/access/AccessControlFacet.sol";
-import {LibRoles} from "./solarprotocol/solidity-modules/contracts/modules/access/LibRoles.sol";
+import {PausableFacet, LibPausable} from "@solarprotocol/solidity-modules/contracts/modules/pausable/PausableFacet.sol";
+import {Initializer} from "@solarprotocol/solidity-modules/contracts/modules/utils/initializer/Initializer.sol";
+import {AccessControlFacet, LibAccessControl} from "@solarprotocol/solidity-modules/contracts/modules/access/AccessControlFacet.sol";
+import {LibRoles} from "@solarprotocol/solidity-modules/contracts/modules/access/LibRoles.sol";
 import {ITokenLocker} from "./token-locker/ITokenLocker.sol";
 import {IMasterChefAdmin} from "./interfaces/IMasterChefAdmin.sol";
+import {ILockBooster} from "./interfaces/ILockBooster.sol";
 
-contract LockerBooster is AccessControlFacet, PausableFacet, Initializer {
+contract LockerBooster is AccessControlFacet, PausableFacet, Initializer, ILockBooster {
     // Internal constant variables
     bytes32 public constant BOOST_MANAGER_ROLE =
         keccak256("BOOST_MANAGER_ROLE");
@@ -22,11 +23,7 @@ contract LockerBooster is AccessControlFacet, PausableFacet, Initializer {
     mapping(address => User) public boostedUser;
 
     // Struct for each boosted user
-    struct User {
-        uint256 boost;
-        uint256 pid;
-        bool init;
-    }
+   
 
     // Error handling
     error UnsupportedDuration();
@@ -40,6 +37,12 @@ contract LockerBooster is AccessControlFacet, PausableFacet, Initializer {
     // Modifier to ensure function is only called by boost manager
     modifier onlyBoostManager() {
         LibAccessControl.enforceRole(BOOST_MANAGER_ROLE);
+        _;
+    }
+
+    // Modifier to ensure function is only called by tokenLocker contract
+    modifier onlyTokenLock(address _tokenLocker){
+        require(address(tokenLocker) == _tokenLocker);
         _;
     }
     // Modifier to check requirements for modifying roles
@@ -68,6 +71,15 @@ contract LockerBooster is AccessControlFacet, PausableFacet, Initializer {
     */
     function updateBoostManager(address _account, uint256 _pid) external onlyBoostManager {
       _updateBoost(_account, _pid);
+    }
+
+     /**
+    * @dev external function for tokenLock contract
+    */
+    function redeemBoost(address _user) external onlyTokenLock(msg.sender) {
+        if(boostedUser[_user].init == true){
+            _updateBoost(_user, boostedUser[_user].pid);
+        }
     }
 
 
@@ -116,7 +128,7 @@ contract LockerBooster is AccessControlFacet, PausableFacet, Initializer {
      * @param _users The account to update the boost multiplier for.
      */
 
-    function chceckAndUpdateUsersLocks(address[] memory _users) external {
+    function chceckAndUpdateUsersLocks(address[] calldata _users) external {
         for (uint256 i = 0; i < _users.length; i++) {
             if (boostedUser[_users[i]].boost != calculateUserBoost(_users[i])) {
                 _updateBoost(_users[i], boostedUser[_users[i]].pid);
