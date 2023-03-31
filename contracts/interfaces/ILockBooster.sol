@@ -11,6 +11,19 @@ interface ILockBooster {
         bool init;
     }
 
+    event BoostManagerChanged(
+        address oldBoostManager,
+        address indexed newBoostManager
+    );
+
+    event MasterChefAddrChanged(address indexed masterChef);
+
+    event UsersBoostUpdated(
+        address indexed _account,
+        uint256 indexed _pid,
+        uint256 calculatedBoost
+    );
+
     function updateBoost(uint256 _pid) external;
 
     /**

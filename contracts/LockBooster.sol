@@ -10,7 +10,12 @@ import {ITokenLocker} from "./token-locker/ITokenLocker.sol";
 import {IMasterChefAdmin} from "./interfaces/IMasterChefAdmin.sol";
 import {ILockBooster} from "./interfaces/ILockBooster.sol";
 
-contract LockerBooster is AccessControlFacet, PausableFacet, Initializer, ILockBooster {
+contract LockerBooster is
+    AccessControlFacet,
+    PausableFacet,
+    Initializer,
+    ILockBooster
+{
     // Internal constant variables
     bytes32 public constant BOOST_MANAGER_ROLE =
         keccak256("BOOST_MANAGER_ROLE");
@@ -23,7 +28,6 @@ contract LockerBooster is AccessControlFacet, PausableFacet, Initializer, ILockB
     mapping(address => User) public boostedUser;
 
     // Struct for each boosted user
-   
 
     // Error handling
     error UnsupportedDuration();
@@ -41,7 +45,7 @@ contract LockerBooster is AccessControlFacet, PausableFacet, Initializer, ILockB
     }
 
     // Modifier to ensure function is only called by tokenLocker contract
-    modifier onlyTokenLock(address _tokenLocker){
+    modifier onlyTokenLock(address _tokenLocker) {
         require(address(tokenLocker) == _tokenLocker);
         _;
     }
@@ -59,29 +63,31 @@ contract LockerBooster is AccessControlFacet, PausableFacet, Initializer, ILockB
         require(_newaddress != address(0), "New addr role is zero.");
         _;
     }
+
     /**
-    * @dev external function for users
-    */
+     * @dev external function for users
+     */
     function updateBoost(uint256 _pid) external {
         _updateBoost(msg.sender, _pid);
     }
 
-     /**
-    * @dev external function for boostManager
-    */
-    function updateBoostManager(address _account, uint256 _pid) external onlyBoostManager {
-      _updateBoost(_account, _pid);
+    /**
+     * @dev external function for boostManager
+     */
+    function updateBoostManager(
+        address _account,
+        uint256 _pid
+    ) external onlyBoostManager {
+        _updateBoost(_account, _pid);
     }
 
-     /**
-    * @dev external function for tokenLock contract
-    */
+    /**
+     * @dev external function for tokenLock contract
+     */
     function redeemBoost(address _user) external onlyTokenLock(msg.sender) {
-        if(boostedUser[_user].init == true){
+        if (boostedUser[_user].init == true)
             _updateBoost(_user, boostedUser[_user].pid);
-        }
     }
-
 
     /**
      * @notice Updates the boost multiplier for the specified account and pool ID in MasterChef
@@ -90,15 +96,19 @@ contract LockerBooster is AccessControlFacet, PausableFacet, Initializer, ILockB
      * @param _account The account to update the boost multiplier for.
      * @param _pid The ID of the pool to update the boost multiplier for.
      */
-    function _updateBoost(address _account, uint256 _pid) internal{
-        uint256 calculatedBoost =  calculateUserBoost(_account);
+    function _updateBoost(address _account, uint256 _pid) internal {
+        uint256 calculatedBoost = calculateUserBoost(_account);
         uint256 boost = (calculatedBoost + 100 * 1e6) * 1e4;
         User storage user = boostedUser[_account];
         if (_pid == user.pid) {
             masterChefAdmin.updateBoostMultiplier(_account, _pid, boost);
         } else {
             if (user.init) {
-                masterChefAdmin.updateBoostMultiplier(_account, user.pid, 100 * 1e10);
+                masterChefAdmin.updateBoostMultiplier(
+                    _account,
+                    user.pid,
+                    100 * 1e10
+                );
             } else {
                 user.init = true;
             }
@@ -106,6 +116,8 @@ contract LockerBooster is AccessControlFacet, PausableFacet, Initializer, ILockB
             user.pid = _pid;
         }
         user.boost = calculatedBoost;
+
+        emit UsersBoostUpdated(_account, _pid, calculatedBoost);
     }
 
     /**
@@ -129,11 +141,10 @@ contract LockerBooster is AccessControlFacet, PausableFacet, Initializer, ILockB
      * @param _users The account to update the boost multiplier for.
      */
 
-    function chceckAndUpdateUsersLocks(address[] calldata _users) external {
+    function checkAndUpdateUsersLocks(address[] calldata _users) external {
         for (uint256 i = 0; i < _users.length; i++) {
-            if (boostedUser[_users[i]].boost != calculateUserBoost(_users[i])) {
+            if (boostedUser[_users[i]].boost != calculateUserBoost(_users[i]))
                 _updateBoost(_users[i], boostedUser[_users[i]].pid);
-            }
         }
     }
 
@@ -141,7 +152,9 @@ contract LockerBooster is AccessControlFacet, PausableFacet, Initializer, ILockB
      * @dev Boost is calculated based on the account's locked tokens in the LockerContract.
      * @param _account The account to calculate the boost multiplier for.
      */
-    function calculateUserBoost(address _account) public view returns (uint256 boost) {
+    function calculateUserBoost(
+        address _account
+    ) public view returns (uint256 boost) {
         LibPausable.enforceNotPaused();
         require(
             address(tokenLocker) != address(0),
@@ -243,6 +256,8 @@ contract LockerBooster is AccessControlFacet, PausableFacet, Initializer, ILockB
     ) external onlyOwner {
         require(address(_masterChefAdmin) != address(0));
         masterChefAdmin = _masterChefAdmin;
+
+        emit MasterChefAddrChanged(_masterChefAdmin);
     }
 
     /**
@@ -264,5 +279,10 @@ contract LockerBooster is AccessControlFacet, PausableFacet, Initializer, ILockB
     {
         LibAccessControl.grantRole(BOOST_MANAGER_ROLE, _newBoostManager);
         LibAccessControl.revokeRole(BOOST_MANAGER_ROLE, _oldBoostManager);
+
+        emit BoostManagerChanged(
+            _oldBoostManager,
+            _newB_newBoostManageroostManager
+        );
     }
 }
