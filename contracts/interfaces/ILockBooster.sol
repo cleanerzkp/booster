@@ -51,7 +51,7 @@ interface ILockBooster {
      * @param _users The account to update the boost multiplier for.
      */
 
-    function chceckAndUpdateUsersLocks(address[] calldata _users) external;
+    function checkAndUpdateUsersLocks(address[] calldata _users) external;
 
     /**
      * @dev Boost is calculated based on the account's locked tokens in the LockerContract.

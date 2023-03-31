@@ -2,15 +2,15 @@
 
 pragma solidity ^0.8.9;
 
-import {PausableFacet, LibPausable} from "@solarprotocol/solidity-modules/contracts/modules/pausable/PausableFacet.sol";
-import {Initializer} from "@solarprotocol/solidity-modules/contracts/modules/utils/initializer/Initializer.sol";
-import {AccessControlFacet, LibAccessControl} from "@solarprotocol/solidity-modules/contracts/modules/access/AccessControlFacet.sol";
-import {LibRoles} from "@solarprotocol/solidity-modules/contracts/modules/access/LibRoles.sol";
+import {PausableFacet, LibPausable} from "./solarprotocol/solidity-modules/contracts/modules/pausable/PausableFacet.sol";
+import {Initializer} from "./solarprotocol/solidity-modules/contracts/modules/utils/initializer/Initializer.sol";
+import {AccessControlFacet, LibAccessControl} from "./solarprotocol/solidity-modules/contracts/modules/access/AccessControlFacet.sol";
+import {LibRoles} from "./solarprotocol/solidity-modules/contracts/modules/access/LibRoles.sol";
 import {ITokenLocker} from "./token-locker/ITokenLocker.sol";
 import {IMasterChefAdmin} from "./interfaces/IMasterChefAdmin.sol";
 import {ILockBooster} from "./interfaces/ILockBooster.sol";
 
-contract LockerBooster is
+contract LockBooster is
     AccessControlFacet,
     PausableFacet,
     Initializer,
@@ -103,15 +103,15 @@ contract LockerBooster is
         if (_pid == user.pid) {
             masterChefAdmin.updateBoostMultiplier(_account, _pid, boost);
         } else {
-            if (user.init) {
+            if (user.init) 
                 masterChefAdmin.updateBoostMultiplier(
                     _account,
                     user.pid,
                     100 * 1e10
                 );
-            } else {
+             else 
                 user.init = true;
-            }
+        
             masterChefAdmin.updateBoostMultiplier(_account, _pid, boost);
             user.pid = _pid;
         }
@@ -174,18 +174,18 @@ contract LockerBooster is
             monthLock.duration > 0 &&
             monthLock.amount > 0 &&
             monthLock.expiresAt >= block.timestamp
-        ) {
+        ) 
             // struct validation
             boost += _calculateBoost(monthLock.amount, monthLock.duration);
-        }
+        
         if (
             yearLock.duration > 0 &&
             yearLock.amount > 0 &&
             yearLock.expiresAt >= block.timestamp
-        ) {
+        ) 
             // struct validation
             boost += _calculateBoost(yearLock.amount, yearLock.duration);
-        }
+        
         return boost >= 15e16 ? 15e16 / DENOMINATOR : boost / DENOMINATOR;
     }
 
@@ -257,7 +257,7 @@ contract LockerBooster is
         require(address(_masterChefAdmin) != address(0));
         masterChefAdmin = _masterChefAdmin;
 
-        emit MasterChefAddrChanged(_masterChefAdmin);
+        emit MasterChefAddrChanged(address(_masterChefAdmin));
     }
 
     /**
@@ -282,7 +282,7 @@ contract LockerBooster is
 
         emit BoostManagerChanged(
             _oldBoostManager,
-            _newB_newBoostManageroostManager
+            _newBoostManager
         );
     }
 }
