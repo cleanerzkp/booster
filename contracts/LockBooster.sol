@@ -32,18 +32,6 @@ contract LockBooster is
     // Error handling
     error UnsupportedDuration();
 
-    // Modifier to ensure function is only called by contract owner
-    modifier onlyOwner() {
-        LibAccessControl.enforceRole(LibRoles.DEFAULT_ADMIN_ROLE);
-        _;
-    }
-
-    // Modifier to ensure function is only called by boost manager
-    modifier onlyBoostManager() {
-        LibAccessControl.enforceRole(BOOST_MANAGER_ROLE);
-        _;
-    }
-
     // Modifier to ensure function is only called by tokenLocker contract
     modifier onlyTokenLock(address _tokenLocker) {
         require(address(tokenLocker) == _tokenLocker);
@@ -68,6 +56,7 @@ contract LockBooster is
      * @dev external function for users
      */
     function updateBoost(uint256 _pid) external {
+        LibPausable.enforceNotPaused();      
         _updateBoost(msg.sender, _pid);
     }
 
@@ -77,7 +66,8 @@ contract LockBooster is
     function updateBoostManager(
         address _account,
         uint256 _pid
-    ) external onlyBoostManager {
+    ) external {
+        LibAccessControl.enforceRole(BOOST_MANAGER_ROLE);
         _updateBoost(_account, _pid);
     }
 
@@ -85,8 +75,9 @@ contract LockBooster is
      * @dev external function for tokenLock contract
      */
     function redeemBoost(address _user) external onlyTokenLock(msg.sender) {
-        if (boostedUser[_user].init == true)
+        if (boostedUser[_user].init == true){
             _updateBoost(_user, boostedUser[_user].pid);
+        }
     }
 
     /**
@@ -103,14 +94,16 @@ contract LockBooster is
         if (_pid == user.pid) {
             masterChefAdmin.updateBoostMultiplier(_account, _pid, boost);
         } else {
-            if (user.init) 
+            if (user.init){ 
                 masterChefAdmin.updateBoostMultiplier(
                     _account,
                     user.pid,
                     100 * 1e10
                 );
-             else 
+            }
+             else{
                 user.init = true;
+            }
         
             masterChefAdmin.updateBoostMultiplier(_account, _pid, boost);
             user.pid = _pid;
@@ -143,8 +136,9 @@ contract LockBooster is
 
     function checkAndUpdateUsersLocks(address[] calldata _users) external {
         for (uint256 i = 0; i < _users.length; i++) {
-            if (boostedUser[_users[i]].boost != calculateUserBoost(_users[i]))
+            if (boostedUser[_users[i]].boost != calculateUserBoost(_users[i])){
                 _updateBoost(_users[i], boostedUser[_users[i]].pid);
+            }
         }
     }
 
@@ -155,7 +149,7 @@ contract LockBooster is
     function calculateUserBoost(
         address _account
     ) public view returns (uint256 boost) {
-        LibPausable.enforceNotPaused();
+
         require(
             address(tokenLocker) != address(0),
             "TokenLocker not initialized."
@@ -174,18 +168,19 @@ contract LockBooster is
             monthLock.duration > 0 &&
             monthLock.amount > 0 &&
             monthLock.expiresAt >= block.timestamp
-        ) 
+        ){
             // struct validation
             boost += _calculateBoost(monthLock.amount, monthLock.duration);
+        }
         
         if (
             yearLock.duration > 0 &&
             yearLock.amount > 0 &&
             yearLock.expiresAt >= block.timestamp
-        ) 
+        ){
             // struct validation
             boost += _calculateBoost(yearLock.amount, yearLock.duration);
-        
+        }
         return boost >= 15e16 ? 15e16 / DENOMINATOR : boost / DENOMINATOR;
     }
 
@@ -208,9 +203,15 @@ contract LockBooster is
     function getBoostRate(
         uint32 duration
     ) internal view returns (uint256 boostRate) {
-        if (duration == 30 days) return monthlyBoost;
-        else if (duration == 365 days) return yearlyBoost;
-        else revert UnsupportedDuration();
+        if (duration == 30 days) {
+            return monthlyBoost;
+        }
+        else if (duration == 365 days){
+            return yearlyBoost;
+        }
+        else {
+            revert UnsupportedDuration();
+        }
     }
 
     /**
@@ -242,7 +243,8 @@ contract LockBooster is
      * @dev Changing access address tokenLocker contract
      * @param _tokenLocker new contract address
      */
-    function changeLockerAddr(ITokenLocker _tokenLocker) external onlyOwner {
+    function changeLockerAddr(ITokenLocker _tokenLocker) external {
+        LibAccessControl.enforceRole(LibRoles.DEFAULT_ADMIN_ROLE);
         require(address(_tokenLocker) != address(0));
         tokenLocker = _tokenLocker;
     }
@@ -253,7 +255,8 @@ contract LockBooster is
      */
     function changeMasterChefAddr(
         IMasterChefAdmin _masterChefAdmin
-    ) external onlyOwner {
+    ) external {
+        LibAccessControl.enforceRole(LibRoles.DEFAULT_ADMIN_ROLE);
         require(address(_masterChefAdmin) != address(0));
         masterChefAdmin = _masterChefAdmin;
 
@@ -270,13 +273,13 @@ contract LockBooster is
         address _newBoostManager
     )
         external
-        onlyOwner
         requirementsChecker(
             _newBoostManager,
             _oldBoostManager,
             BOOST_MANAGER_ROLE
         )
     {
+        LibAccessControl.enforceRole(LibRoles.DEFAULT_ADMIN_ROLE);
         LibAccessControl.grantRole(BOOST_MANAGER_ROLE, _newBoostManager);
         LibAccessControl.revokeRole(BOOST_MANAGER_ROLE, _oldBoostManager);
 

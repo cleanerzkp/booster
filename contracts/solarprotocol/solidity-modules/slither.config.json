@@ -1,0 +1,6 @@
+{
+  "filter_paths": "(node_modules/)",
+  "detectors_to_exclude": "solc-version,dead-code,similar-names,name-reused",
+  "exclude_informational": true,
+  "exclude_low": true
+}

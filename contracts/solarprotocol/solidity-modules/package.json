@@ -1,0 +1,75 @@
+{
+  "name": "@solarprotocol/solidity-modules",
+  "description": "Set of Solidity smart contract modules that use the EIP-2535 DiamondStorage pattern",
+  "version": "1.0.0",
+  "main": "index.js",
+  "keywords": [
+    "solidity",
+    "diamond",
+    "eip-2535",
+    "eip2535",
+    "ethereum",
+    "smart",
+    "contracts"
+  ],
+  "homepage": "https://solarde.fi",
+  "repository": {
+    "type": "git",
+    "url": "gitlab:solardefi/solidity-modules"
+  },
+  "author": "0xFluffyBeard",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://gitlab.com/solardefi/solidity-modules/-/issues"
+  },
+  "devDependencies": {
+    "@ethersproject/abi": "^5.4.7",
+    "@ethersproject/providers": "^5.4.7",
+    "@nomicfoundation/hardhat-chai-matchers": "^1.0.0",
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.0",
+    "@nomicfoundation/hardhat-toolbox": "^2.0.0",
+    "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers",
+    "@nomiclabs/hardhat-etherscan": "^3.0.0",
+    "@solarprotocol/hardhat-utils": "^4.0.0",
+    "@typechain/ethers-v5": "^10.1.0",
+    "@typechain/hardhat": "^6.1.2",
+    "@types/chai": "^4.2.0",
+    "@types/mocha": "^9.1.0",
+    "@types/node": ">=12.0.0",
+    "@typescript-eslint/eslint-plugin": "^5.38.0",
+    "@typescript-eslint/parser": "^5.38.0",
+    "chai": "^4.2.0",
+    "eslint": "^8.24.0",
+    "eslint-config-prettier": "^8.5.0",
+    "ethers": "^5.7.1",
+    "hardhat": "^2.11.2",
+    "hardhat-contract-sizer": "^2.6.1",
+    "hardhat-deploy": "^0.11.15",
+    "hardhat-gas-reporter": "^1.0.8",
+    "prettier": "^2.7.1",
+    "prettier-plugin-solidity": "^1.0.0-beta.24",
+    "shx": "^0.3.4",
+    "solhint": "^3.3.7",
+    "solidity-coverage": "^0.8.0",
+    "ts-node": ">=8.0.0",
+    "typechain": "^8.1.0",
+    "typescript": ">=4.5.0"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "4.7.3",
+    "@types/chai-arrays": "^2.0.0",
+    "chai-arrays": "^2.2.0",
+    "contracts-starter": "https://git@github.com/mudgen/diamond-3-hardhat.git#2788111a0a9b7e8b1815e65c2305840d5b7af5a5"
+  },
+  "scripts": {
+    "clean": "shx rm -rf ./artifacts ./cache ./coverage ./typechain-types ./coverage.json && yarn typechain",
+    "lint": "yarn lint:sol && yarn lint:ts && yarn prettier",
+    "lint:sol": "solhint --max-warnings 0 'contracts/**/*.sol'",
+    "lint:ts": "eslint --ext .js,.ts .",
+    "lint:ts:fix": "eslint --ext .js,.ts .",
+    "prettier": "prettier '**/*.{js,json,md,sol,ts,yml}' --check",
+    "prettier:fix": "prettier '**/*.{js,json,md,sol,ts,yml}' --write",
+    "test": "hardhat test",
+    "typechain": "hardhat typechain"
+  }
+}

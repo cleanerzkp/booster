@@ -34,8 +34,6 @@ contract TokenLocker is
 {
     using SafeERC20 for IERC20;
 
-    ILockBooster public boosterContract;
-
     /// @notice DEPRECATED
     IERC20 public deprecatedToken;
 
@@ -47,6 +45,8 @@ contract TokenLocker is
 
     uint256 public constant MIN_DEPOSIT_AMOUNT = 1e18;
     uint256 public constant MAX_DEPOSIT_AMOUNT = 5000e18;
+
+    ILockBooster public boosterContract;
 
     modifier onlyOwner() {
         LibAccessControl.enforceRole(LibRoles.DEFAULT_ADMIN_ROLE);

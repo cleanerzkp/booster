@@ -16,7 +16,7 @@ pragma solidity ^0.8.9;
 
 import {ITokenLocker} from "./ITokenLocker.sol";
 import {IERC20Mintable} from "../interfaces/IERC20Mintable.sol";
-import {LibERC20} from "@solarprotocol/solidity-modules/contracts/modules/token/ERC20/LibERC20.sol";
+import {LibERC20} from "../solarprotocol/solidity-modules/contracts/modules/token/ERC20/LibERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 library LibTokenLocker {
